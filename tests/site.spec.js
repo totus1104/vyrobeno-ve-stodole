@@ -405,7 +405,7 @@ test('obchod přepočítává košík a uloží zkušební objednávku na server
   expect(response.status()).toBe(201);
   expect(response.request().postDataJSON()).toMatchObject({ delivery: 'shipping', payment: 'pickup' });
   expect(await response.json()).toMatchObject({ number: expect.stringMatching(/^\d{6}$/), total: 390 });
-  await expect(page.locator('#shop-result')).toContainText(/Zkušební objednávka.*390\sKč.*byla uložena/);
+  await expect(page.locator('#shop-result')).toContainText(/Objednávka.*390\sKč.*byla uložena/);
   await expect(checkout).toBeHidden();
   await expect(page.getByRole('link', { name: 'Košík', exact: true })).toBeVisible();
 });
@@ -421,7 +421,7 @@ test('košík bez objednávkového serveru dovolí vyplnit údaje a zvolit platb
   await page.getByRole('button', { name: 'Přidat do košíku: Dřevěný svícen' }).click();
   await page.getByRole('link', { name: 'Přejít do košíku' }).click();
   const checkout = page.locator('#shop-checkout');
-  await expect(checkout.locator('#shop-submit-status')).toContainText('objednávku teď nelze odeslat');
+  await expect(checkout.locator('#shop-submit-status')).toContainText('Objednávková služba je momentálně nedostupná.');
   await checkout.getByLabel('Jméno a příjmení').fill('Jana Ukázková');
   await checkout.getByLabel('E-mail').fill('jana@example.com');
   await checkout.getByLabel('Ulice a číslo domu').fill('Ukázková 12');
@@ -463,7 +463,7 @@ test('zkušební košík ověří doručení a cenu bez odeslání údajů', asy
   await shipping.check();
   await expect(page.locator('#cart-total')).toHaveText(/1\s100\sKč/);
   await form.getByRole('button', { name: 'Odeslat objednávku' }).click();
-  await expect(page.locator('#shop-result')).toHaveText(/Zkušební objednávka za 1\s100\sKč/);
+  await expect(page.locator('#shop-result')).toHaveText(/Celkem 1\s100\sKč\. Objednávku se nepodařilo odeslat/);
   await expect(form.locator('#shop-name')).toHaveValue('Jana Ukázková');
 
   await page.getByRole('link', { name: 'Zpět do obchodu' }).click();
@@ -496,9 +496,9 @@ test('testovací faktura projde přes Apps Script s cenami ze zkušebního katal
     await form.locator(`#shop-${key}`).fill(value);
   }
   await form.getByRole('radio', { name: 'Doručení na uvedenou adresu' }).check();
-  await form.getByRole('radio', { name: 'Převodem (QR platba ve faktuře)' }).check();
+  await form.getByRole('radio', { name: 'Převodem po potvrzení (QR platba)' }).check();
   await form.getByRole('button', { name: 'Odeslat objednávku' }).click();
-  await expect(page.locator('#shop-result')).toHaveText(/Zkušební objednávka TEST-2026000001.*Vzor faktury jsme odeslali e-mailem/);
+  await expect(page.locator('#shop-result')).toHaveText(/Objednávka TEST-2026000001.*Potvrzení jsme odeslali e-mailem/);
 });
 
 for (const width of [360, 768, 1440]) {

@@ -14,7 +14,7 @@
 .shop-product, .shop-cart { border: 1px solid var(--line); padding: clamp(16px, 2vw, 28px); }
 .shop-product { display: grid; align-content: start; grid-template-rows: auto 1fr auto auto; gap: 12px; }
 .shop-product .button { justify-self: start; }
-.shop-custom, #shop-preview { margin-top: 16px; }
+.shop-custom { margin-top: 16px; }
 .shop-layout--catalog { display: block; }
 .cart-layout { max-width: 740px; padding-block: 40px 72px; }
 .cart-layout .shop-cart h2 { font-size: clamp(1.8rem, 3vw, 2.7rem); margin-bottom: 1.25rem; }

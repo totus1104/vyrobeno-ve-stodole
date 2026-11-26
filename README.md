@@ -66,6 +66,10 @@ Při změně výrobků, popisů nebo cen stačí zveřejnit nový `katalog.json`
 
 S nastaveným `checkoutScriptUrl` a `checkoutTestInvoices: true` se celý průchod objednávky provede přes Apps Script. Oba e-maily skutečně odejdou, objednávky mají vlastní číselnou řadu a PDF je označené **VZOR - NEPLAŤTE**. Platba převodem má ukázkový QR kód. Pro tento režim může `catalogReady` zůstat `false`. Před ostrým prodejem nastavte `checkoutTestInvoices: false` a `catalogReady: true` a doplňte fakturační údaje v Apps Scriptu. Pokud jsou obě hodnoty `false`, košík ověřuje formulář a cenu bez odeslání údajů.
 
+Adresu nasazení `/exec` lze otevřít v prohlížeči. Vrátí stav katalogu, zdroj a počet výrobků, případně popis chyby. Skript čte přednostně GitHub Pages a při chybě načtení použije soubor `katalog.json` z větve `main` repozitáře GitHub.
+
+Pokud chybí oprávnění pro `UrlFetchApp`, zobrazte soubor `appsscript.json` v nastavení projektu Apps Scriptu. Použijte `oauthScopes` z `server/checkout-apps-script/appsscript.json` a zachovejte ostatní nastavení projektu. Uložte projekt, vyberte v editoru `overitKatalog` a spusťte ji pod účtem vlastníka nasazení. Funkce vyžádá oprávnění k přístupu ke katalogu a k odesílání pošty, pak ověří načtení a e-mailovou kvótu bez vytvoření objednávky. Po úspěšném ověření aktualizujte stávající nasazení na novou verzi.
+
 Číslování dokladů a stav odeslání se ukládají ve vlastnostech projektu Apps Script. Při aktualizaci kódu používejte novou verzi téhož nasazení. Kód pro kontaktní formulář je v samostatném projektu.
 
 ## Objednávky a QR platby na serveru Node.js

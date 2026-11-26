@@ -5,11 +5,46 @@ import { test } from 'node:test';
 import { runInNewContext } from 'node:vm';
 
 const code = await readFile(new URL('../Checkout.gs', import.meta.url), 'utf8');
+const manifest = JSON.parse(await readFile(new URL('./appsscript.json', import.meta.url), 'utf8'));
 const input = {
   requestId: '12345678-1234-1234-1234-123456789012', key: '22345678-1234-1234-1234-123456789012',
   name: 'Jana Ukázková', email: 'jana@example.com', street: 'Ukázková 12', postcode: '30100', city: 'Plzeň',
   delivery: 'pickup', payment: 'transfer', items: [{ id: 'prkenko', quantity: 2, price: 1 }], expectedTotal: 1380,
 };
+
+test('diagnostika katalogu ověří záložní zdroj a rozliší oprávnění od chyby HTTP', () => {
+  let primaryStatus = 200;
+  let mirrorStatus = 200;
+  let authorized = true;
+  const logs = [];
+  const { verify, status } = runInNewContext(`${code}\n({ verify: overitKatalog, status: doGet });`, {
+    ScriptApp: { AuthMode: { FULL: 'FULL' }, requireScopes: (mode, scopes) => {
+      assert.equal(mode, 'FULL');
+      assert.deepEqual([...scopes], manifest.oauthScopes);
+      if (!authorized) throw new Error('Google consent required');
+    } },
+    UrlFetchApp: { fetch: url => {
+      if (!authorized) throw new Error('Required permissions: script.external_request');
+      return {
+        getResponseCode: () => url.includes('github.io') ? primaryStatus : mirrorStatus,
+        getContentText: () => JSON.stringify({ products: [{}], maxQuantity: 20, checkoutTestInvoices: true }),
+      };
+    } },
+    MailApp: { getRemainingDailyQuota: () => 10 },
+    Logger: { log: message => logs.push(message) },
+    ContentService: { MimeType: { JSON: 'application/json' }, createTextOutput: value => ({ setMimeType: () => value }) },
+  });
+  verify();
+  assert.deepEqual(JSON.parse(logs[0]), { ok: true, source: 'GitHub Pages', products: 1, testInvoices: true });
+  assert.match(logs[1], /10/);
+  primaryStatus = 403;
+  assert.deepEqual(JSON.parse(status()), { ok: true, source: 'GitHub', products: 1, testInvoices: true });
+  mirrorStatus = 404;
+  assert.match(JSON.parse(status()).error, /HTTP 403.*HTTP 404/);
+  authorized = false;
+  assert.match(JSON.parse(status()).error, /nemá oprávnění ke službě UrlFetchApp/);
+  assert.throws(verify, /Google consent required/);
+});
 
 test('doprava je zdarma až po překročení 1 000 Kč', () => {
   const priceOrder = runInNewContext(`${code}\npriceOrder_;`, {});
@@ -107,15 +142,17 @@ test('košík vypočte cenu na serveru a při výpadku opakuje jen nedokončený
   assert.match(nextInvoice, /1 940,00 Kč/);
 
   const demoOrder = { ...input, key: '42345678-1234-1234-1234-123456789012', expectedTotal: 1600 };
-  assert.match(handle(demoOrder), /chybí fakturační údaje/);
+  assert.match(handle(demoOrder), /Objednávku teď nelze dokončit/);
   catalog = { ...catalog, catalogReady: false, checkoutTestInvoices: true };
   const demo = handle(demoOrder);
   assert.match(demo, /"ok":true,"number":"TEST-2026000001","total":1600,"test":true/);
   const demoMessages = messages.slice(-2);
   assert.deepEqual(demoMessages.map(message => message.to), ['zrzek.10@gmail.com', input.email]);
+  assert.equal(demoMessages[1].subject, 'Potvrzení objednávky TEST-2026000001 – Vyrobeno ve stodole');
   for (const { attachments: [pdf] } of demoMessages) {
     assert.equal(pdf.filename, 'faktura-TEST-2026000001.pdf');
     assert.match(pdf.html, /VZOR - NEPLAŤTE/);
+    assert.doesNotMatch(pdf.html, /doplněn|CELKEM K ÚHRADĚ/i);
     assert.match(pdf.html, /data:image\/gif;base64/);
   }
   assert.match(demoMessages[1].body, /Platbu prosím neprovádějte/);

@@ -2,6 +2,7 @@ const SHOP = {
   recipient: 'zrzek.10@gmail.com',
   siteOrigin: 'https://totus1104.github.io',
   catalogUrl: 'https://totus1104.github.io/vyrobeno-ve-stodole/katalog.json',
+  catalogMirrorUrl: 'https://raw.githubusercontent.com/totus1104/vyrobeno-ve-stodole/refs/heads/main/katalog.json',
   supplier: 'Vyrobeno ve stodole',
   legalName: '',
   address: '',
@@ -65,17 +66,82 @@ function readOrder_(data) {
   };
 }
 
+// Run from the editor as the deployment owner to check access without creating an order.
+function overitKatalog() {
+  ScriptApp.requireScopes(ScriptApp.AuthMode.FULL, [
+    'https://www.googleapis.com/auth/script.external_request',
+    'https://www.googleapis.com/auth/script.send_mail',
+  ]);
+  Logger.log(JSON.stringify(catalogStatus_()));
+  Logger.log(`Zbývající počet příjemců e-mailů pro dnešek: ${MailApp.getRemainingDailyQuota()}.`);
+}
+
+function doGet() {
+  return ContentService.createTextOutput(JSON.stringify(catalogStatus_())).setMimeType(ContentService.MimeType.JSON);
+}
+
+function catalogStatus_() {
+  try {
+    const { catalog, source } = fetchCatalog_();
+    return { ok: true, source, products: catalog.products.length, testInvoices: catalog.checkoutTestInvoices === true };
+  } catch (error) {
+    return { ok: false, error: error.message };
+  }
+}
+
+function readCatalogFromUrl_(url) {
+  let response;
+  try {
+    response = UrlFetchApp.fetch(url, { followRedirects: false, muteHttpExceptions: true });
+  } catch (error) {
+    const reason = String(error.message || error);
+    if (/permission|authoriz|oprávněn|autorizac|script\.external_request/i.test(reason)) {
+      throw new Error('Apps Script nemá oprávnění ke službě UrlFetchApp. Spusťte overitKatalog v editoru pod účtem vlastníka.');
+    }
+    throw new Error('Google nedokázal navázat spojení s GitHubem.');
+  }
+  const status = response.getResponseCode();
+  if (status !== 200) throw new Error(`GitHub vrátil pro katalog HTTP ${status}.`);
+  let catalog;
+  try {
+    catalog = JSON.parse(response.getContentText());
+  } catch {
+    throw new Error('GitHub vrátil obsah, který není platný JSON.');
+  }
+  if (!Array.isArray(catalog?.products) || !Number.isSafeInteger(catalog.maxQuantity) || catalog.maxQuantity < 1) {
+    throw new Error('V katalogu chybí platná pole products nebo maxQuantity.');
+  }
+  return catalog;
+}
+
+function fetchCatalog_() {
+  let catalog;
+  let source = 'GitHub Pages';
+  try {
+    catalog = readCatalogFromUrl_(SHOP.catalogUrl);
+  } catch (primaryError) {
+    source = 'GitHub';
+    try {
+      catalog = readCatalogFromUrl_(SHOP.catalogMirrorUrl);
+    } catch (mirrorError) {
+      throw new Error(primaryError.message === mirrorError.message
+        ? primaryError.message
+        : `GitHub Pages: ${primaryError.message} GitHub: ${mirrorError.message}`);
+    }
+  }
+  if (catalog.catalogReady !== true && catalog.checkoutTestInvoices !== true) {
+    throw new Error('V načteném katalogu není zapnutý ostrý prodej ani test faktur.');
+  }
+  return { catalog, source };
+}
+
 function loadCatalog_() {
   try {
-    const response = UrlFetchApp.fetch(SHOP.catalogUrl, { followRedirects: false, headers: { 'Cache-Control': 'no-cache' } });
-    if (response.getResponseCode() !== 200) throw new Error('Catalog HTTP error');
-    const catalog = JSON.parse(response.getContentText());
-    if ((catalog.catalogReady === true || catalog.checkoutTestInvoices === true) && Array.isArray(catalog.products) &&
-        Number.isSafeInteger(catalog.maxQuantity) && catalog.maxQuantity > 0) return catalog;
+    return fetchCatalog_().catalog;
   } catch (error) {
-    console.warn(`Načtení katalogu selhalo. ${error.name || 'Error'}`);
+    console.warn(`Načtení katalogu selhalo: ${error.message || error.name || 'Error'}`);
+    throw new CheckoutError('Aktuální katalog teď není k dispozici. Zkuste to prosím později.');
   }
-  throw new CheckoutError('Aktuální katalog teď není k dispozici. Zkuste to prosím později.');
 }
 
 function priceOrder_(order, catalog) {
@@ -139,21 +205,23 @@ function sendOrder_(order, key) {
           `Celkem: ${czk_(pricedOrder.total)} Kč`].join('\n');
         MailApp.sendEmail({
           to: SHOP.recipient, replyTo: order.email,
-          subject: `Vyrobeno ve stodole – ${test ? 'zkušební ' : ''}objednávka ${number}`,
-          body: test ? `Zkušební objednávka. Přiložený doklad je vzor a není určen k úhradě.\n\n${details}` : details,
+          subject: `Vyrobeno ve stodole – objednávka ${number}`,
+          body: test ? `Přiložený doklad slouží jako náhled. Platbu prosím neprovádějte.\n\n${details}` : details,
           attachments: [pdf],
         });
         state.ownerSent = true;
         props.setProperty(storageKey, JSON.stringify(state));
       }
       if (!state.customerSent) {
-        const paymentText = order.payment === 'transfer' ? 'Platební údaje a QR kód najdete ve faktuře.' : 'Objednávku uhradíte při převzetí.';
+        const paymentText = test
+          ? 'V příloze najdete náhled dokladu. Platbu prosím neprovádějte.'
+          : order.payment === 'transfer'
+            ? 'V příloze najdete fakturu s platebními údaji a QR kódem.'
+            : 'V příloze najdete fakturu. Objednávku uhradíte při převzetí.';
         MailApp.sendEmail({
           to: order.email, replyTo: SHOP.recipient,
-          subject: `Potvrzení ${test ? 'zkušební ' : ''}objednávky ${number} – Vyrobeno ve stodole`,
-          body: test
-            ? 'Dobrý den,\n\nzkušební objednávka byla přijata. V příloze je vzor faktury. Platbu prosím neprovádějte.\n\nVyrobeno ve stodole'
-            : `Dobrý den,\n\nděkuji za Vaši objednávku. V příloze najdete fakturu. ${paymentText}\n\nVyrobeno ve stodole`,
+          subject: `Potvrzení objednávky ${number} – Vyrobeno ve stodole`,
+          body: `Dobrý den,\n\nděkuji za Vaši objednávku. ${paymentText}\n\nVyrobeno ve stodole`,
           attachments: [pdf],
         });
         state.customerSent = true;
@@ -169,7 +237,8 @@ function sendOrder_(order, key) {
 function requireBillingSettings_() {
   if (!SHOP.legalName.trim() || !SHOP.address.trim() ||
       !/^\d{8}$/.test(SHOP.ico) || SHOP.taxMode !== 'non-vat' || !normalizeCheckoutIban_(SHOP.iban)) {
-    throw new CheckoutError('Pro ostrý provoz chybí fakturační údaje.');
+    console.warn('Chybí platné fakturační údaje dodavatele.');
+    throw new CheckoutError('Objednávku teď nelze dokončit. Zkuste to prosím později.');
   }
 }
 
@@ -273,21 +342,20 @@ function invoiceHtml_(supplier, order, number, issuedAt, sample = false) {
     img { width: 88pt; height: 88pt; display: block; margin: 0 auto; }
     .sample { border: 1px solid #777; padding: 5pt; text-align: center; font-weight: bold; margin: 0 0 8pt; }
     .tax { margin-top: 9pt; color: #333; }
-    .tax-summary { width: 100%; border-collapse: collapse; table-layout: fixed; margin-top: 9pt; }
-    .tax-summary th, .tax-summary td { border: 1px solid #aaa; padding: 4pt 6pt; text-align: left; }
     </style></head><body>
-    ${sample ? '<p class="sample">VZOR - NEPLAŤTE. QR kód obsahuje ukázkový účet.</p>' : ''}
+    ${sample ? '<p class="sample">VZOR - NEPLAŤTE</p>' : ''}
     <table class="heading"><tr><td><h1>${e(supplier.supplier)}</h1></td><td><h1>FAKTURA č. ${e(number)}</h1></td></tr></table>
-    <table class="parties"><tr><td><h2>Dodavatel</h2><p><strong>${e(supplier.legalName || supplier.supplier)}</strong></p><p>${e(supplier.address || 'Adresa bude doplněna')}</p><p>IČO: ${e(supplier.ico || 'bude doplněno')}</p>${sample ? '<p>DIČ: dle daňového režimu</p>' : ''}<p>E-mail: ${e(supplier.recipient)}</p></td>
+    <table class="parties"><tr><td><h2>Dodavatel</h2><p><strong>${e(supplier.legalName || supplier.supplier)}</strong></p>
+    ${supplier.address ? `<p>${e(supplier.address)}</p>` : ''}${supplier.ico ? `<p>IČO: ${e(supplier.ico)}</p>` : ''}<p>E-mail: ${e(supplier.recipient)}</p></td>
     <td><h2>Odběratel</h2><p><strong>${e(order.name)}</strong></p><p>${e(order.street)}</p><p>${e(order.postcode)} ${e(order.city)}</p><p>E-mail: ${e(order.email)}</p></td></tr>
-    <tr><td><p>Datum vystavení: <strong>${date(issued, 'dd.MM.yyyy')}</strong></p><p>Datum splatnosti: <strong>${transfer ? date(deadline, 'dd.MM.yyyy') : 'při převzetí'}</strong></p>${sample ? '<p>Datum uskutečnění plnění: bude doplněno</p>' : ''}<p>Forma úhrady: <strong>${e(PAYMENT_NAMES[order.payment])}</strong></p></td>
+    <tr><td><p>Datum vystavení: <strong>${date(issued, 'dd.MM.yyyy')}</strong></p>${sample ? '' : `<p>Datum splatnosti: <strong>${transfer ? date(deadline, 'dd.MM.yyyy') : 'při převzetí'}</strong></p>`}<p>Forma úhrady: <strong>${e(PAYMENT_NAMES[order.payment])}</strong></p></td>
     <td><p>Číslo objednávky: <strong>${e(number)}</strong></p><p>Variabilní symbol: <strong>${e(number)}</strong></p><p>Předání: <strong>${e(DELIVERY_NAMES[order.delivery])}</strong></p></td></tr></table>
     <table class="items"><thead><tr><th>Označení položky</th><th>Množství</th><th>J. cena (Kč)</th><th>Celkem (Kč)</th></tr></thead>
     <tbody>${lines}</tbody>
-    <tfoot><tr><td colspan="3">CELKEM K ÚHRADĚ</td><td>${czk_(order.total)} Kč</td></tr></tfoot></table>
+    <tfoot><tr><td colspan="3">${sample ? 'CELKEM' : 'CELKEM K ÚHRADĚ'}</td><td>${czk_(order.total)} Kč</td></tr></tfoot></table>
     <table class="payment"><tr>${qr ? `<td><img src="data:image/gif;base64,${qr}" alt="QR platba"><strong>QR platba</strong></td>` : ''}<td><h2>${transfer ? 'Platební údaje' : 'Úhrada při převzetí'}</h2>
-    ${transfer ? `<p>IBAN: <strong>${e(iban || 'bude doplněn')}</strong></p><p>Částka: <strong>${czk_(order.total)} Kč</strong></p><p>Variabilní symbol: <strong>${e(number)}</strong></p>` : '<p>Platbu provedete při převzetí.</p>'}</td></tr></table>
-    ${sample ? '<table class="tax-summary"><tr><th>Rekapitulace DPH</th><th>Základ v Kč</th><th>Sazba</th><th>DPH v Kč</th><th>Celkem s DPH</th></tr><tr><td colspan="5">Údaje budou doplněny podle daňového režimu dodavatele.</td></tr></table>' : '<p class="tax">Dodavatel není plátcem DPH.</p>'}
+    ${transfer ? `<p>IBAN: <strong>${e(iban)}</strong></p><p>Částka: <strong>${czk_(order.total)} Kč</strong></p><p>Variabilní symbol: <strong>${e(number)}</strong></p>` : ''}</td></tr></table>
+    ${sample ? '' : '<p class="tax">Dodavatel není plátcem DPH.</p>'}
     </body></html>`;
 }
 

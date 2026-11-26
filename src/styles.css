@@ -57,9 +57,6 @@ p:not(.eyebrow):not(.home-subtitle), dd, figcaption, .contact-help li, .form-res
 .hero-slide.is-active { opacity: 1; visibility: visible; transition: opacity .6s ease, visibility 0s; }
 .hero-slide > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 #hero-slide-1 > img { object-position: 70% center; }
-.hero-slide .placeholder-hero { height: 100%; }
-.hero-slide:nth-child(2) .placeholder-hero { background: #ede8e0; }
-.hero-slide:nth-child(3) .placeholder-hero { background: #e7dfd4; }
 #hero-slide-4 { overflow: hidden; background: var(--placeholder); container: workshop-slide / size; }
 #hero-slide-4::before {
   content: '';
@@ -163,6 +160,7 @@ p:not(.eyebrow):not(.home-subtitle), dd, figcaption, .contact-help li, .form-res
 .three-columns p { font-size: .95rem; color: var(--muted); margin-top: 1rem; }
 .workshop { min-height: 410px; }
 .about-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: center; gap: clamp(32px, 6vw, 96px); margin-bottom: 72px; }
+.about-row--text { grid-template-columns: minmax(0, 72ch); }
 .about-copy { min-width: 0; }
 .about-copy h2 { font-size: clamp(2rem, 3.3vw, 3.2rem); }
 .about-copy h3 { margin-bottom: 1.4rem; font-size: clamp(1.8rem, 2.6vw, 2.5rem); }
@@ -173,9 +171,9 @@ p:not(.eyebrow):not(.home-subtitle), dd, figcaption, .contact-help li, .form-res
 .about-row--image-right .about-copy { grid-column: 1; grid-row: 1; }
 .about-row--image-right .about-photo { grid-column: 2; grid-row: 1; }
 .about-photo { width: 100%; min-height: 0; height: 420px; margin: 0; }
-.about-photo--portrait { height: 660px; }
 .about-row--barn { grid-template-columns: minmax(0, .65fr) minmax(0, 1.35fr); gap: clamp(32px, 4vw, 64px); }
 .about-photo--barn { height: auto; aspect-ratio: 16 / 10; }
+.about-photo--barn > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .about-photo--working { display: grid; gap: 8px; height: auto; }
 .about-photo--working > img { display: block; width: 100%; height: auto; }
 .about-photo--working > .about-photo--cropped { aspect-ratio: 1479 / 1064; object-fit: cover; object-position: center; }
@@ -354,6 +352,7 @@ input[type=file]::file-selector-button { cursor: pointer; background: var(--plac
     background: var(--placeholder);
   }
   #hero-slide-1 { --photo-backdrop: url('./assets/images/dubova-postel-s-osvetlenim-960.jpg'); }
+  #hero-slide-2 { --photo-backdrop: url('./assets/images/javorova-postel.jpg'); }
   #hero-slide-3 { --photo-backdrop: url('./assets/images/knihovna-s-pracovnim-stolem.jpg'); }
   #hero-slide-4 { --photo-backdrop: url('./assets/images/naradi-a-sverky.png'); }
   .hero-slide:has(> img)::before {
@@ -409,7 +408,7 @@ input[type=file]::file-selector-button { cursor: pointer; background: var(--plac
   .workshop { min-height: 300px; }
   .about-row { display: flex; flex-direction: column; align-items: stretch; gap: 28px; margin-bottom: 48px; }
   .about-photo { height: 300px; }
-  .about-photo--portrait { height: 380px; }
+  .about-photo--barn { height: auto; }
   .about-photo--working { height: auto; }
   .about-working-heading { padding-top: 0; margin-bottom: 32px; }
   .gallery { padding-block: 20px 32px; }

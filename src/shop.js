@@ -111,7 +111,7 @@ form.addEventListener('submit', async event => {
   if (scriptUrl && !catalogReady && !checkoutTestInvoices) {
     const previewTotal = totalWithDelivery(form.elements.delivery.value);
     result.hidden = false;
-    result.textContent = `Zkušební objednávka za ${money.format(previewTotal)} je v pořádku. Údaje zůstaly v prohlížeči.`;
+    result.textContent = `Celkem ${money.format(previewTotal)}. Objednávku se nepodařilo odeslat. Zkuste to prosím později.`;
     result.focus();
     return;
   }
@@ -124,16 +124,16 @@ form.addEventListener('submit', async event => {
   submitButton.disabled = true;
   form.setAttribute('aria-busy', 'true');
   result.hidden = false;
-  result.textContent = 'Ukládám objednávku…';
+  result.textContent = 'Odesílám objednávku…';
   try {
     const saved = await submitOrder({ ...order, key: lastSubmission.key });
     result.textContent = scriptUrl
       ? saved.test === true
-        ? `Zkušební objednávka ${saved.number} za ${money.format(saved.total)} prošla. Vzor faktury jsme odeslali e-mailem.`
+        ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Potvrzení jsme odeslali e-mailem. S platbou vyčkejte na pokyny.`
         : `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Fakturu jsme odeslali e-mailem.`
       : live
       ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Vyčkejte na potvrzení termínu a ceny. Zatím nic neplaťte.`
-      : `Zkušební objednávka ${saved.number} za ${money.format(saved.total)} byla uložena. E-maily zůstávají v místním náhledu.`;
+      : `Objednávka ${saved.number} za ${money.format(saved.total)} byla uložena. Potvrzení se e-mailem neodesílá.`;
     cart.clear();
     writeCart(cart);
     form.reset();
@@ -175,11 +175,9 @@ cartPanel.hidden = false;
 renderCart();
 if (scriptUrl) {
   canSubmit = true;
-  document.querySelector('#shop-preview').hidden = catalogReady && !checkoutTestInvoices;
-  submitStatus.hidden = catalogReady && !checkoutTestInvoices;
-  submitStatus.textContent = checkoutTestInvoices
-    ? 'Zkušební režim. Vzor faktury přijde na zadaný e-mail.'
-    : 'Zkušební režim. Odesláním ověříte vyplnění a celkovou cenu.';
+  submitStatus.textContent = catalogReady || checkoutTestInvoices
+    ? 'Potvrzení objednávky vám přijde na zadaný e-mail.'
+    : 'Odeslání objednávek je momentálně nedostupné.';
   const shipping = form.querySelector('[value="shipping"]');
   shipping.disabled = checkoutShippingPrice === null;
   const shippingHint = checkoutShippingPrice === null
@@ -190,7 +188,9 @@ if (scriptUrl) {
     : '';
   document.querySelector('#shop-delivery-hint').textContent = shippingHint + freeShippingHint;
   document.querySelector('.shop-total').firstChild.textContent = 'Celkem ';
-  form.querySelector('[value="transfer"]').parentElement.lastChild.textContent = ' Převodem (QR platba ve faktuře)';
+  if (catalogReady && !checkoutTestInvoices) {
+    form.querySelector('[value="transfer"]').parentElement.lastChild.textContent = ' Převodem (QR platba ve faktuře)';
+  }
   syncCheckout();
 } else try {
   const response = await fetch('./api/shop/status', { signal: AbortSignal.timeout(5000) });
@@ -199,9 +199,8 @@ if (scriptUrl) {
   if (typeof shopStatus?.live !== 'boolean') throw new Error();
   live = shopStatus.live;
   canSubmit = true;
-  document.querySelector('#shop-preview').hidden = live;
   submitStatus.hidden = true;
   syncCheckout();
 } catch {
-  submitStatus.textContent = 'Objednávková služba není dostupná. Údaje můžete vyplnit na zkoušku, objednávku teď nelze odeslat.';
+  submitStatus.textContent = 'Objednávková služba je momentálně nedostupná. Zkuste to prosím později.';
 }
