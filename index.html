@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vyrobeno ve stodole — zakázková výroba z masivu</title>
+    <meta
+      name="description"
+      content="Originální nábytek a doplňky z masivního dřeva podle Vašich představ. Osobní domluva od prvního nápadu až po předání."
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="module" src="./src/main.js"></script>
+  </head>
+  <body>
+    <!--site-header-->
+    <main id="obsah" tabindex="-1">
+      <section
+        class="hero"
+        aria-labelledby="home-title"
+        aria-roledescription="prezentace fotografií"
+      >
+        <div class="hero-slides" aria-live="off">
+          <div
+            id="hero-slide-1"
+            class="hero-slide is-active"
+            role="group"
+            aria-label="1 ze 4"
+            aria-roledescription="snímek"
+            aria-hidden="false"
+          >
+            <img
+              src="./src/assets/images/dubova-postel-s-osvetlenim.jpg"
+              srcset="
+                ./src/assets/images/dubova-postel-s-osvetlenim-960.jpg  960w,
+                ./src/assets/images/dubova-postel-s-osvetlenim.jpg     1672w
+              "
+              sizes="100vw"
+              width="1672"
+              height="941"
+              alt="Dubová postel s osvětleným čelem"
+              fetchpriority="high"
+              decoding="async"
+            />
+          </div>
+          <div
+            id="hero-slide-2"
+            class="hero-slide"
+            role="group"
+            aria-label="2 ze 4"
+            aria-roledescription="snímek"
+            aria-hidden="true"
+          >
+            <div class="placeholder placeholder-hero">
+              <span class="placeholder-label">
+                Hlavní fotografie 2
+                <small>Fotografie dílny nebo hotového výrobku — k doplnění</small>
+              </span>
+            </div>
+          </div>
+          <div
+            id="hero-slide-3"
+            class="hero-slide"
+            role="group"
+            aria-label="3 ze 4"
+            aria-roledescription="snímek"
+            aria-hidden="true"
+          >
+            <img
+              src="./src/assets/images/knihovna-s-pracovnim-stolem.jpg"
+              width="1649"
+              height="954"
+              alt="Dřevěná knihovna s pracovním stolem a drobnou květinou na desce."
+              decoding="async"
+            />
+          </div>
+          <div
+            id="hero-slide-4"
+            class="hero-slide"
+            role="group"
+            aria-label="4 ze 4"
+            aria-roledescription="snímek"
+            aria-hidden="true"
+          >
+            <img
+              src="./src/assets/images/naradi-a-sverky.png"
+              width="1464"
+              height="1074"
+              alt="Truhlářská dílna s pracovním ponkem, ručním nářadím a svěrkami."
+              decoding="async"
+            />
+          </div>
+        </div>
+        <div class="hero-heading">
+          <h1 id="home-title">
+            Výrobky na míru
+            <br />
+            podle Vašich představ
+          </h1>
+          <div class="hero-controls" role="group" aria-label="Ovládání fotografií" hidden>
+            <div class="hero-dots" role="group" aria-label="Výběr fotografie">
+              <button
+                class="hero-dot"
+                type="button"
+                data-slide="0"
+                aria-label="Zobrazit fotografii 1 ze 4"
+                aria-controls="hero-slide-1"
+                aria-pressed="true"
+              ></button>
+              <button
+                class="hero-dot"
+                type="button"
+                data-slide="1"
+                aria-label="Zobrazit fotografii 2 ze 4"
+                aria-controls="hero-slide-2"
+                aria-pressed="false"
+              ></button>
+              <button
+                class="hero-dot"
+                type="button"
+                data-slide="2"
+                aria-label="Zobrazit fotografii 3 ze 4"
+                aria-controls="hero-slide-3"
+                aria-pressed="false"
+              ></button>
+              <button
+                class="hero-dot"
+                type="button"
+                data-slide="3"
+                aria-label="Zobrazit fotografii 4 ze 4"
+                aria-controls="hero-slide-4"
+                aria-pressed="false"
+              ></button>
+            </div>
+            <span
+              id="hero-slide-status"
+              class="visually-hidden"
+              role="status"
+              aria-atomic="true"
+            ></span>
+          </div>
+        </div>
+      </section>
+      <section class="home-intro" aria-labelledby="intro-title">
+        <div class="home-intro-heading">
+          <h2 id="intro-title">Vyrobeno ve stodole</h2>
+          <p class="home-subtitle">Každý kus je originál</p>
+          <div class="actions">
+            <a class="button" href="./kontakt.html">
+              Nezávazná poptávka
+              <span aria-hidden="true">↗</span>
+            </a>
+            <a class="text-link" href="./o-stodole.html">
+              O stodole
+              <span aria-hidden="true">→</span>
+            </a>
+            <a class="text-link" href="./galerie.html">
+              Galerie
+              <span aria-hidden="true">→</span>
+            </a>
+          </div>
+        </div>
+        <div class="home-description">
+          <p>
+            Dávám dřevu tvar a Vašim představám skutečnou podobu. Pracuji pouze s masivním dřevem.
+            Vyrábím originální nábytek, dřevěné doplňky i další realizace z masivního dřeva podle
+            Vašich přání. Vše s důrazem na precizní zpracování, funkčnost a poctivé řemeslo.
+          </p>
+          <p>
+            Každé zakázce se věnuji osobně od Vašeho prvního nápadu až po poslední detail. Výsledkem
+            je výrobek, který odpovídá Vašim představám a potřebám a který nikde jinde nekoupíte.
+          </p>
+        </div>
+      </section>
+      <section class="home-process" aria-labelledby="process-title">
+        <div class="process-heading">
+          <h2 id="process-title">Jak to všechno vzniká?</h2>
+          <p>Od prvního nápadu po předání hotového výrobku.</p>
+        </div>
+        <ol class="process-list">
+          <li>
+            <span class="step-number" aria-hidden="true">01</span>
+            <div>
+              <h3>Nápad</h3>
+              <p>
+                Pošlete mi svou představu, inspiraci nebo třeba stavební nákres. Nezáleží na tom,
+                zda svou představu popíšete, nebo pošlete třeba jen fotografii něčeho, co jste
+                viděli na dovolené a přejete si mít doma.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-number" aria-hidden="true">02</span>
+            <div>
+              <h3>Domluva</h3>
+              <p>
+                Probereme, zda je Váš nápad realizovatelný a jaký materiál, jaké konstrukční řešení
+                a jaká povrchová úprava jsou pro něj vhodné. Probereme také Vaši představu o termínu
+                zhotovení, předání nebo montáže na místě.
+              </p>
+              <p>
+                Nejlepší je sejít se alespoň jednou osobně. Podrobnosti a případná doplnění pak
+                můžeme probrat telefonicky, e-mailem nebo třeba prostřednictvím videohovoru.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-number" aria-hidden="true">03</span>
+            <div>
+              <h3>Dohoda</h3>
+              <p>
+                Na základě naší domluvy a všech potřebných informací si odsouhlasíme konečnou podobu
+                výrobku. Na závěr stanovím cenu a reálný termín dodání hotového výrobku nebo montáže
+                na místě.
+              </p>
+              <p>
+                V některých případech budu požadovat zálohu na materiál, jinak vše zaplatíte až po
+                dodání výrobku.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-number" aria-hidden="true">04</span>
+            <div>
+              <h3>Výroba</h3>
+              <p>
+                Jakmile se dohodneme na konečné podobě výrobku, ceně a termínu, mohu se pustit do
+                práce.
+              </p>
+            </div>
+          </li>
+          <li>
+            <span class="step-number" aria-hidden="true">05</span>
+            <div>
+              <h3>Předání</h3>
+              <p>
+                Před dohodnutým termínem dodání Vás budu kontaktovat, abychom si domluvili přesný
+                čas, místo a způsob předání nebo zahájení montáže na místě.
+              </p>
+              <p>
+                Podle domluvy si pak výrobek převezmete nebo Vám jej nainstaluji přímo na místě.
+                Nakonec doplatíte dohodnutou cenu.
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+    </main>
+    <!--site-footer-->
+  </body>
+</html>

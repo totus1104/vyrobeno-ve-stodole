@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Obchod | Vyrobeno ve stodole</title>
+    <meta name="description" content="Připravovaný obchod s výrobky ze Stodoly." />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/shop.css" />
+    <script type="module" src="./src/main.js"></script>
+    <script type="module" src="./src/shop-products.js"></script>
+  </head>
+  <body>
+    <!--site-header-->
+    <main id="obsah" tabindex="-1">
+      <section class="container page-intro">
+        <h1>Obchod</h1>
+        <p class="lead" id="shop-intro">Vyberte si výrobky ze Stodoly. Dostupnost a termín potvrdím po přijetí objednávky.</p>
+        <p id="shop-preview" hidden>Zkušební provoz. Nabídka a ceny jsou ukázkové. Použijte smyšlené údaje.</p>
+      </section>
+      <hr class="section-divider" />
+      <div class="container shop-layout shop-layout--catalog">
+        <section aria-labelledby="products-title">
+          <h2 id="products-title">Nabídka</h2>
+          <div class="shop-products" id="shop-products"></div>
+          <p id="shop-cart-status" role="status"></p>
+          <a class="button" id="go-to-cart" href="./kosik.html" hidden>Přejít do košíku</a>
+          <p class="shop-custom">Máte vlastní představu? <a href="./kontakt.html">Napište mi kvůli výrobě na míru</a>.</p>
+          <noscript><p>Pro zobrazení nabídky a vyzkoušení košíku zapněte JavaScript.</p></noscript>
+        </section>
+
+      </div>
+    </main>
+    <!--site-footer-->
+  </body>
+</html>

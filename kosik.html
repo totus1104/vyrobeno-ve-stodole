@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Košík | Vyrobeno ve stodole</title>
+    <meta name="description" content="Nákupní košík a objednávka výrobků ze Stodoly." />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/shop.css" />
+    <script type="module" src="./src/main.js"></script>
+    <script type="module" src="./src/shop.js"></script>
+  </head>
+  <body>
+    <!--site-header-->
+    <main id="obsah" tabindex="-1">
+      <section class="container page-intro">
+        <h1>Košík</h1>
+        <p class="lead" id="shop-intro">Zkontrolujte výrobky a vyplňte údaje pro objednávku.</p>
+        <p id="shop-preview" hidden>Zkušební provoz. Nabídka a ceny jsou ukázkové. Použijte smyšlené údaje.</p>
+      </section>
+      <hr class="section-divider" />
+      <div class="container cart-layout">
+        <section class="shop-cart" aria-labelledby="cart-title" hidden>
+          <h2 id="cart-title">Položky v košíku</h2>
+          <p id="cart-empty">Košík je zatím prázdný.</p>
+          <ul id="cart-items" class="shop-items"></ul>
+          <p id="cart-status" class="visually-hidden" role="status"></p>
+          <form id="shop-checkout" hidden>
+            <fieldset disabled>
+              <legend>Údaje k objednávce</legend>
+              <div class="field">
+                <label for="shop-name">Jméno a příjmení</label>
+                <input id="shop-name" name="name" autocomplete="name" maxlength="100" required />
+              </div>
+              <div class="field">
+                <label for="shop-email">E-mail</label>
+                <input id="shop-email" name="email" type="email" autocomplete="email" maxlength="254" required />
+              </div>
+              <fieldset>
+                <legend>Doručovací adresa</legend>
+                <div class="field">
+                  <label for="shop-street">Ulice a číslo domu</label>
+                  <input id="shop-street" name="street" autocomplete="address-line1" maxlength="150" required />
+                </div>
+                <div class="field">
+                  <label for="shop-city">Obec</label>
+                  <input id="shop-city" name="city" autocomplete="address-level2" maxlength="100" required />
+                </div>
+                <div class="field">
+                  <label for="shop-postcode">PSČ</label>
+                  <input id="shop-postcode" name="postcode" autocomplete="postal-code" inputmode="numeric" pattern="[0-9]{3} ?[0-9]{2}" maxlength="6" title="Pět číslic, například 301 00" required />
+                </div>
+              </fieldset>
+              <fieldset class="shop-methods">
+                <legend>Jak chcete výrobky převzít?</legend>
+                <label><input type="radio" name="delivery" value="pickup" checked required /> Osobní odběr</label>
+                <label><input type="radio" name="delivery" value="shipping" required /> Doručení na uvedenou adresu</label>
+              </fieldset>
+              <p class="shop-hint">Termín a případnou cenu dopravy potvrdím e-mailem.</p>
+              <fieldset class="shop-methods">
+                <legend>Platební metoda</legend>
+                <label><input type="radio" name="payment" value="transfer" required /> Převodem po potvrzení (QR platba)</label>
+                <label><input type="radio" name="payment" value="pickup" required checked /> Při osobním předání</label>
+              </fieldset>
+              <p class="shop-total">Celkem za výrobky <strong id="cart-total"></strong></p>
+              <button class="button" type="submit" disabled>Odeslat objednávku</button>
+            </fieldset>
+          </form>
+          <p id="shop-result" role="status" tabindex="-1" hidden></p>
+        </section>
+        <a id="return-to-shop" href="./obchod.html">Zpět do obchodu</a>
+        <noscript><p>Pro použití košíku zapněte JavaScript.</p></noscript>
+      </div>
+    </main>
+    <!--site-footer-->
+  </body>
+</html>

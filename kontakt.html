@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kontakt — proberme Váš nápad | Vyrobeno ve stodole</title>
+    <meta
+      name="description"
+      content="Připravte si představu, rozměry nebo inspiraci pro zakázku z masivu. Karel (Qasar) Kvasnička, zakázková výroba v Plzeňském kraji."
+    />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <script type="module" src="./src/main.js"></script>
+  </head>
+  <body>
+    <!--site-header-->
+    <main id="obsah" tabindex="-1">
+      <section class="container page-intro"><h1>Kontakt</h1></section>
+      <hr class="section-divider" />
+      <div class="container contact-layout">
+        <aside class="contact-aside">
+          <h2>Kontaktní údaje</h2>
+          <dl class="contact-details">
+            <div>
+              <dt>Jméno a příjmení</dt>
+              <dd>Karel (Qasar) Kvasnička</dd>
+            </div>
+            <div>
+              <dt>E-mail</dt>
+              <dd><a href="mailto:karel.kvasnicka42@gmail.com">karel.kvasnicka42@gmail.com</a></dd>
+            </div>
+            <div>
+              <dt>Telefon</dt>
+              <dd><a href="tel:+420731546321">+420 731 546 321</a></dd>
+            </div>
+            <div>
+              <dt>Instagram</dt>
+              <dd><a href="https://www.instagram.com/vyrobeno_ve_stodole/">@vyrobeno_ve_stodole</a></dd>
+            </div>
+            <div>
+              <dt>Oblast působnosti</dt>
+              <dd>Plzeňský kraj, Středočeský kraj</dd>
+            </div>
+          </dl>
+          <div class="contact-help">
+            <h3>Co uvést do formuláře</h3>
+            <p>
+              Popište, co má výrobek umět a k čemu bude sloužit. Přidejte přibližné rozměry,
+              představu o materiálu a požadovaném termínu. Pomůže také fotografie nebo náčrt; můžete
+              uvést i svou cenovou představu.
+            </p>
+            <p>
+              Formulář je nezávazný. Jakmile Váš požadavek zpracuji, ozvu se Vám a společně se
+              domluvíme na podrobnostech.
+            </p>
+          </div>
+        </aside>
+        <section class="form-panel" aria-labelledby="form-title">
+          <h2 id="form-title">Formulář</h2>
+          <noscript><p class="notice">Pro použití formuláře zapněte JavaScript.</p></noscript>
+          <form id="inquiry-form" novalidate>
+            <fieldset id="form-fields" disabled>
+              <legend class="visually-hidden">Údaje pro nezávaznou poptávku</legend>
+              <div class="field">
+                <label for="full-name">
+                  Jméno a příjmení
+                  <span class="required-marker" title="Povinný údaj" aria-hidden="true">*</span>
+                </label>
+                <input
+                  id="full-name"
+                  name="fullName"
+                  autocomplete="name"
+                  required
+                  aria-describedby="full-name-error"
+                />
+                <p class="field-error" id="full-name-error"></p>
+              </div>
+              <div class="form-row">
+                <div class="field">
+                  <label for="email">
+                    E-mail
+                    <span class="required-marker" title="Povinný údaj" aria-hidden="true">*</span>
+                  </label>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    autocomplete="email"
+                    required
+                    aria-describedby="email-error"
+                  />
+                  <p class="field-error" id="email-error"></p>
+                </div>
+                <div class="field">
+                  <label for="phone">
+                    Telefon
+                    <span class="optional">/ nepovinné</span>
+                  </label>
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autocomplete="tel"
+                    aria-describedby="phone-error"
+                  />
+                  <p class="field-error" id="phone-error"></p>
+                </div>
+              </div>
+              <div class="field">
+                <label for="description">
+                  Stručný popis
+                  <span class="optional">/ nepovinné</span>
+                </label>
+                <textarea
+                  id="description"
+                  name="description"
+                  rows="5"
+                  placeholder="Co byste si přáli vyrobit?"
+                  aria-describedby="description-hint"
+                ></textarea>
+                <p class="field-hint" id="description-hint">
+                  Stačí pár vět. Podrobnosti můžeme probrat společně.
+                </p>
+              </div>
+              <div class="field attachment-field">
+                <label for="attachments">Přílohy</label>
+                <p class="field-hint" id="attachments-hint">
+                  PDF, JPG/JPEG, PNG, DOC nebo DOCX (max 15 MB)
+                </p>
+                <input
+                  id="attachments"
+                  name="attachments"
+                  type="file"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                  aria-describedby="attachments-hint attachments-error"
+                />
+                <p class="field-error" id="attachments-error" aria-live="polite"></p>
+                <ul class="file-list" id="file-list" aria-label="Vybrané přílohy"></ul>
+                <p class="field-hint" id="attachment-total" aria-live="polite">
+                  Zatím nejsou vybrány žádné přílohy.
+                </p>
+              </div>
+              <button id="dismiss-attachment-errors" class="detail-button" type="button" hidden>
+                Pokračovat bez odmítnutých souborů
+              </button>
+              <button class="button submit-button" type="submit">
+                Odeslat formulář
+                <span aria-hidden="true">↗</span>
+              </button>
+            </fieldset>
+            <div class="form-result" id="form-result" role="status" tabindex="-1"></div>
+          </form>
+        </section>
+      </div>
+    </main>
+    <!--site-footer-->
+  </body>
+</html>
