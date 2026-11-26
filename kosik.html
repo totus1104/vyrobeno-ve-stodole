@@ -57,11 +57,11 @@
                 <label><input type="radio" name="delivery" value="pickup" checked required /> Osobní odběr</label>
                 <label><input type="radio" name="delivery" value="shipping" required /> Doručení na uvedenou adresu</label>
               </fieldset>
-              <p class="shop-hint">Termín a případnou cenu dopravy potvrdím e-mailem.</p>
+              <p class="shop-hint" id="shop-delivery-hint">Termín a případnou cenu dopravy potvrdím e-mailem.</p>
               <fieldset class="shop-methods">
                 <legend>Platební metoda</legend>
                 <label><input type="radio" name="payment" value="transfer" required /> Převodem po potvrzení (QR platba)</label>
-                <label><input type="radio" name="payment" value="pickup" required checked /> Při osobním předání</label>
+                <label><input type="radio" name="payment" value="pickup" required checked /> Při převzetí</label>
               </fieldset>
               <p class="shop-total">Celkem za výrobky <strong id="cart-total"></strong></p>
               <button class="button" type="submit" disabled>Odeslat objednávku</button>

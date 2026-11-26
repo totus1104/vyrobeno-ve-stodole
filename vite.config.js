@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite';
 import { fileURLToPath } from 'node:url';
+import { readFile } from 'node:fs/promises';
 import { header, footer } from './src/layout.js';
 import { czechTypography } from './src/typography.js';
 import { shopApi } from './server/shop-api.js';
@@ -12,6 +13,12 @@ export default defineConfig({
     transformIndexHtml(html, context) {
       const page = context.filename.replaceAll('\\', '/').split('/').pop();
       return czechTypography(html.replace('<!--site-header-->', header(page)).replace('<!--site-footer-->', footer()));
+    },
+  }, {
+    name: 'publish-catalog',
+    async generateBundle() {
+      const source = await readFile(new URL('./katalog.json', import.meta.url), 'utf8');
+      this.emitFile({ type: 'asset', fileName: 'katalog.json', source });
     },
   }, {
     name: 'shop-api',

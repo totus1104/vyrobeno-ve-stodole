@@ -1,5 +1,6 @@
-import { maxQuantity } from './shop-catalog.js';
+import { catalogReady, maxQuantity, checkoutShippingPrice, checkoutScriptUrl as scriptUrl } from './shop-catalog.js';
 import { readCart, writeCart } from './cart-state.js';
+import { postAppsScript } from './inquiry-mail.js';
 
 const money = new Intl.NumberFormat('cs-CZ', {
   style: 'currency',
@@ -24,11 +25,11 @@ let live = false;
 let lastSubmission;
 
 function syncCheckout() {
-  const shipping = form.elements.delivery.value === 'shipping';
-  const pickup = form.querySelector('[name=payment][value=pickup]');
-  pickup.disabled = shipping;
-  if (shipping && pickup.checked) form.elements.payment.value = 'transfer';
   submitButton.disabled = processing || !canSubmit || !form.matches(':valid');
+  if (scriptUrl) {
+    const shipping = form.elements.delivery.value === 'shipping' ? checkoutShippingPrice ?? 0 : 0;
+    totalLabel.textContent = money.format(total() + shipping);
+  }
 }
 
 function element(tag, text, className) {
@@ -86,6 +87,7 @@ function renderCart() {
   empty.hidden = cart.size > 0;
   form.hidden = cart.size === 0;
   totalLabel.textContent = money.format(total());
+  syncCheckout();
 }
 
 form.addEventListener('input', syncCheckout);
@@ -111,14 +113,10 @@ form.addEventListener('submit', async event => {
   result.hidden = false;
   result.textContent = 'Ukládám objednávku…';
   try {
-    const response = await fetch('./api/shop/orders', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...order, key: lastSubmission.key }),
-    });
-    const saved = await response.json();
-    if (!response.ok) throw new Error(saved.error || 'Objednávková služba je nedostupná.');
-    result.textContent = live
+    const saved = await submitOrder({ ...order, key: lastSubmission.key });
+    result.textContent = scriptUrl
+      ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Fakturu jsme odeslali e-mailem.`
+      : live
       ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Vyčkejte na potvrzení termínu a ceny. Zatím nic neplaťte.`
       : `Zkušební objednávka ${saved.number} za ${money.format(saved.total)} byla uložena. E-maily zůstávají v místním náhledu.`;
     cart.clear();
@@ -138,12 +136,42 @@ form.addEventListener('submit', async event => {
   result.focus();
 });
 
+async function submitOrder(order) {
+  if (scriptUrl) {
+    const expectedTotal = total() + (order.delivery === 'shipping' ? checkoutShippingPrice ?? 0 : 0);
+    const reply = await postAppsScript(scriptUrl, { ...order, expectedTotal }, 'Odeslání se nepodařilo potvrdit. Košík zůstal zachován. Zkuste odeslání zopakovat.');
+    if (reply.ok !== true) throw new Error(reply.error || 'Objednávková služba je nedostupná.');
+    return reply;
+  }
+  const response = await fetch('./api/shop/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(order),
+  });
+  const saved = await response.json();
+  if (!response.ok) throw new Error(saved.error || 'Objednávková služba je nedostupná.');
+  return saved;
+}
+
 // Editing the checkout does not require the order service.
 fields.disabled = false;
 syncCheckout();
 cartPanel.hidden = false;
 renderCart();
-try {
+if (scriptUrl) {
+  canSubmit = catalogReady;
+  document.querySelector('#shop-preview').hidden = catalogReady;
+  submitStatus.hidden = catalogReady;
+  submitStatus.textContent = 'Objednávková služba se připravuje.';
+  const shipping = form.querySelector('[value="shipping"]');
+  shipping.disabled = checkoutShippingPrice === null;
+  document.querySelector('#shop-delivery-hint').textContent = checkoutShippingPrice === null
+    ? 'Aktuálně je k dispozici osobní odběr.'
+    : `Doprava stojí ${money.format(checkoutShippingPrice)}.`;
+  document.querySelector('.shop-total').firstChild.textContent = 'Celkem ';
+  form.querySelector('[value="transfer"]').parentElement.lastChild.textContent = ' Převodem (QR platba ve faktuře)';
+  syncCheckout();
+} else try {
   const response = await fetch('./api/shop/status', { signal: AbortSignal.timeout(5000) });
   if (!response.ok) throw new Error();
   const shopStatus = await response.json();

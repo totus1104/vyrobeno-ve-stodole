@@ -1,4 +1,4 @@
-import { maxQuantity, products } from './shop-catalog.js';
+import { catalogReady, checkoutScriptUrl, maxQuantity, products } from './shop-catalog.js';
 import { readCart, writeCart } from './cart-state.js';
 
 const catalog = document.querySelector('#shop-products');
@@ -46,13 +46,17 @@ for (const product of products) {
 
 updateOffer();
 window.addEventListener('pageshow', updateOffer);
-try {
+function showPreview() {
+  document.querySelector('#shop-preview').hidden = false;
+  document.querySelector('#products-title').textContent = 'Ukázka nabídky';
+}
+
+if (checkoutScriptUrl) {
+  if (!catalogReady) showPreview();
+} else try {
   const response = await fetch('./api/shop/status');
   if (!response.ok) throw new Error();
-  if (!(await response.json()).live) {
-    document.querySelector('#shop-preview').hidden = false;
-    document.querySelector('#products-title').textContent = 'Ukázka nabídky';
-  }
+  if (!(await response.json()).live) showPreview();
 } catch {
   document.querySelector('#shop-intro').textContent = 'Objednávky jsou dočasně nedostupné.';
 }

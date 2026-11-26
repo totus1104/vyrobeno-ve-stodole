@@ -32,6 +32,7 @@ Karel | Vyrobeno ve stodole`,
 potvrzuji objednávku {{number}}.
 
 {{delivery}}: {{handover}}
+{{deliveryAddress}}
 Celkem: {{total}}
 
 {{pickupInstructions}}

@@ -2,16 +2,17 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdir, writeFile, rename } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import nodemailer from 'nodemailer';
-import { catalogReady, maxQuantity, products } from '../src/shop-catalog.js';
+import catalog from '../katalog.json' with { type: 'json' };
 import { normalizeIban, paymentQr } from './qr-payment.js';
 import { formatOrderEmail } from './order-email-templates.js';
 
 const emailPattern = /^[a-z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/i;
 const currency = new Intl.NumberFormat('cs-CZ', { style: 'currency', currency: 'CZK', maximumFractionDigits: 0 });
-const methodNames = { transfer: 'bankovní převod po potvrzení', pickup: 'platba při osobním předání' };
+const methodNames = { transfer: 'bankovní převod po potvrzení', pickup: 'platba při převzetí' };
 const deliveryNames = { pickup: 'Osobní odběr', shipping: 'Doručení' };
 const orderNumber = id => String(id).padStart(6, '0');
 const clean = value => typeof value === 'string' ? value.trim() : '';
+const { catalogReady, maxQuantity, products } = catalog;
 
 export class ShopError extends Error {
   constructor(message, status = 400) {
@@ -109,8 +110,8 @@ export async function openShop({ env = process.env, preview = false } = {}) {
     if (!Object.hasOwn(methodNames, payment)) {
       throw new ShopError('Zkontrolujte zvolený způsob platby.');
     }
-    if (!Object.hasOwn(deliveryNames, delivery) || (delivery === 'shipping' && payment !== 'transfer')) {
-      throw new ShopError('Zkontrolujte způsob předání. Pro doručení zvolte platbu převodem.');
+    if (!Object.hasOwn(deliveryNames, delivery)) {
+      throw new ShopError('Zkontrolujte způsob předání.');
     }
     if (!street || street.length > 150 || !city || city.length > 100 || /[\r\n]/.test(street + city) || !/^\d{3} ?\d{2}$/.test(postcode)) {
       throw new ShopError('Vyplňte úplnou doručovací adresu včetně pětimístného PSČ.');
@@ -168,7 +169,12 @@ export async function openShop({ env = process.env, preview = false } = {}) {
       throw new ShopError('Pro potvrzení převodu nastavte SHOP_IBAN. Objednávka zůstává nepotvrzená.');
     }
     const number = orderNumber(id);
-    const qr = iban ? await paymentQr(iban, total, number) : null;
+    const qr = iban && (order.payment === 'transfer' || order.delivery === 'pickup')
+      ? await paymentQr(iban, total, number)
+      : null;
+    const pickupInstructions = order.delivery === 'shipping'
+      ? 'Zaplaťte při převzetí zásilky. Způsob úhrady upřesním při domluvě o doručení.'
+      : 'Plaťte při osobním předání, hotově' + (qr ? ' nebo převodem pomocí přiloženého QR kódu.' : '.');
     const email = formatOrderEmail(order.payment, {
       number,
       name: order.name,
@@ -179,7 +185,7 @@ export async function openShop({ env = process.env, preview = false } = {}) {
       handover,
       total: currency.format(total),
       bankDetails: qr ? `IBAN: ${iban}\nVariabilní symbol: ${number}` : '',
-      pickupInstructions: 'Plaťte při osobním předání, hotově' + (qr ? ' nebo převodem pomocí přiloženého QR kódu.' : '.'),
+      pickupInstructions,
     });
     transaction(() => {
       const changed = db.prepare("UPDATE orders SET status = 'confirmed', handover = ?, final_total = ? WHERE id = ? AND status = 'pending'")

@@ -50,10 +50,29 @@ function doPost(event) {
     MailApp.sendEmail({
       to: RECIPIENT,
       replyTo: email,
-      subject: `Objednávka č.: ${orderNumber}`,
+      subject: `Vyrobeno ve stodole: ${orderNumber}`,
       body,
       attachments,
     });
+    try {
+      MailApp.sendEmail({
+        to: email,
+        replyTo: RECIPIENT,
+        subject: 'Potvrzení přijetí poptávky – Vyrobeno ve stodole',
+        body: [
+          'Dobrý den,',
+          '',
+          'děkuji za Vaši zprávu. V následujících dnech Vás budu kontaktovat, abychom se dohodli na dalším zpracování Vašeho požadavku.',
+          '',
+          'Vyrobeno ve stodole',
+        ].join('\n'),
+      });
+      console.info(`Google MailApp přijal potvrzení k poptávce ${orderNumber} k odeslání.`);
+    } catch (error) {
+      const reason = String(error.message || error)
+        .replace(/[^\s<>@]+@[^\s<>@]+/g, '[e-mail]');
+      console.warn(`Potvrzení k poptávce ${orderNumber} se nepodařilo odeslat. Důvod: ${reason}`);
+    }
     return reply_({ requestId, ok: true, orderNumber });
   } catch (error) {
     return reply_({ requestId, ok: false, error: 'Poptávku se nepodařilo odeslat. Zkuste to znovu nebo mi napište e-mail.' });

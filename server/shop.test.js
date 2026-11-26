@@ -17,7 +17,7 @@ test('objednávky, potvrzení, QR a zkušební e-maily', async () => {
   };
   const shop = await openShop({ env });
   assert.throws(() => shop.place({ ...order, postcode: '30' }), /adresu/);
-  assert.throws(() => shop.place({ ...order, payment: 'pickup' }), /převodem/);
+  assert.throws(() => shop.place({ ...order, delivery: 'unknown' }), /způsob předání/);
   assert.throws(() => shop.place({ ...order, items: [{ id: 'unknown', quantity: 1 }] }), /množství/);
   const receipt = shop.place(order);
   assert.equal(receipt.total, 1380);
@@ -27,8 +27,10 @@ test('objednávky, potvrzení, QR a zkušební e-maily', async () => {
   await assert.rejects(shop.confirm(1, 'Stodola, pátek 16:00'), /SHOP_IBAN/);
   assert.equal(shop.get(1).status, 'pending');
   assert.deepEqual(await shop.deliver(), { delivered: 2, failed: 0 });
-  const pickup = shop.place({ ...order, key: randomUUID(), payment: 'pickup', delivery: 'pickup' });
-  assert.equal((await shop.confirm(Number(pickup.number), 'Stodola, pátek 16:00')).qr, null);
+  const pickup = shop.place({ ...order, key: randomUUID(), payment: 'pickup' });
+  assert.equal(shop.get(Number(pickup.number)).delivery, 'shipping');
+  assert.equal(shop.get(Number(pickup.number)).payment, 'pickup');
+  assert.equal((await shop.confirm(Number(pickup.number), 'Pátek 16:00')).qr, null);
   shop.close();
 
   // Fictional account used only to exercise the IBAN checksum and QR payload.
