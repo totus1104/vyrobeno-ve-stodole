@@ -11,6 +11,20 @@ const input = {
   delivery: 'pickup', payment: 'transfer', items: [{ id: 'prkenko', quantity: 2, price: 1 }], expectedTotal: 1380,
 };
 
+test('doprava je zdarma až po překročení 1 000 Kč', () => {
+  const priceOrder = runInNewContext(`${code}\npriceOrder_;`, {});
+  for (const [subtotal, shipping] of [[999, 100], [1000, 100], [1001, 0]]) {
+    const catalog = {
+      maxQuantity: 20, checkoutShippingPrice: 100, checkoutFreeShippingAbove: 1000,
+      products: [{ id: 'test', name: 'Zkušební výrobek', price: subtotal }],
+    };
+    const order = { delivery: 'shipping', items: [{ id: 'test', quantity: 1 }], expectedTotal: subtotal + shipping };
+    const { total, lines } = priceOrder(order, catalog);
+    assert.equal(total, subtotal + shipping);
+    assert.equal(lines.at(-1).price, shipping);
+  }
+});
+
 test('košík vypočte cenu na serveru a při výpadku opakuje jen nedokončený e-mail', () => {
   const props = new Map();
   const messages = [];
@@ -20,9 +34,15 @@ test('košík vypočte cenu na serveru a při výpadku opakuje jen nedokončený
     products: [{ id: 'prkenko', name: 'Dubové servírovací prkénko', price: 690 }],
   };
   let fetches = 0;
-  const submit = runInNewContext(`${code}
+  const { submit, handle } = runInNewContext(`${code}
     Object.assign(SHOP, { taxMode: 'non-vat', legalName: 'Ukázkový dodavatel', address: 'Ukázková 1', ico: '12345678', iban: 'CZ9106000000000000000123' });
-    (data) => sendOrder_(readOrder_(data), data.key);`, {
+    ({
+      submit(data) { return sendOrder_(readOrder_(data), data.key); },
+      handle(data) {
+        Object.assign(SHOP, { legalName: '', address: '', ico: '', iban: '', taxMode: '' });
+        return doPost({ parameter: { payload: JSON.stringify(data) } });
+      }
+    });`, {
     LockService: { getScriptLock: () => ({ waitLock() {}, releaseLock() {} }) },
     PropertiesService: { getScriptProperties: () => ({
       getProperty: key => props.get(key),
@@ -41,7 +61,13 @@ test('košík vypočte cenu na serveru a při výpadku opakuje jen nedokončený
       computeDigest: (_algorithm, input) => createHash('sha256').update(input).digest(),
       base64EncodeWebSafe: bytes => Buffer.from(bytes).toString('base64url'),
     },
-    HtmlService: { createHtmlOutput: html => ({ getAs: mime => ({ setName: filename => ({ mime, filename, html }) }) }) },
+    HtmlService: {
+      XFrameOptionsMode: { ALLOWALL: 'ALLOWALL' },
+      createHtmlOutput: html => ({
+        getAs: mime => ({ setName: filename => ({ mime, filename, html }) }),
+        setXFrameOptionsMode: () => html,
+      }),
+    },
     MailApp: { sendEmail: message => {
       if (message.to === input.email && !failedCustomerMail) {
         failedCustomerMail = true;
@@ -79,4 +105,20 @@ test('košík vypočte cenu na serveru a při výpadku opakuje jen nedokončený
   assert.match(nextInvoice, /<td>Nová miska<\/td><td>1<\/td><td>250,00<\/td><td>250,00<\/td>/);
   assert.match(nextInvoice, /<td>Doprava<\/td><td>1<\/td><td>90,00<\/td><td>90,00<\/td>/);
   assert.match(nextInvoice, /1 940,00 Kč/);
+
+  const demoOrder = { ...input, key: '42345678-1234-1234-1234-123456789012', expectedTotal: 1600 };
+  assert.match(handle(demoOrder), /chybí fakturační údaje/);
+  catalog = { ...catalog, catalogReady: false, checkoutTestInvoices: true };
+  const demo = handle(demoOrder);
+  assert.match(demo, /"ok":true,"number":"TEST-2026000001","total":1600,"test":true/);
+  const demoMessages = messages.slice(-2);
+  assert.deepEqual(demoMessages.map(message => message.to), ['zrzek.10@gmail.com', input.email]);
+  for (const { attachments: [pdf] } of demoMessages) {
+    assert.equal(pdf.filename, 'faktura-TEST-2026000001.pdf');
+    assert.match(pdf.html, /VZOR - NEPLAŤTE/);
+    assert.match(pdf.html, /data:image\/gif;base64/);
+  }
+  assert.match(demoMessages[1].body, /Platbu prosím neprovádějte/);
+  assert.equal(props.get('sequence:2026'), '2');
+  assert.equal(props.get('test-sequence:2026'), '1');
 });

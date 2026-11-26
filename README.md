@@ -56,13 +56,15 @@ Po úpravě `Code.gs` nasazujte novou verzi přes **Nasadit → Spravovat nasaze
 
 Samostatný skript pro košík sestavíte ve složce `web-faze-1` příkazem `node server/checkout-apps-script/build.mjs`. Výstup `server/Checkout.gs` obsahuje kód, šablonu faktury a knihovnu QR kódů. Pro vytvoření ukázkového PDF v `output/pdf` přidejte `--preview`.
 
-Před připojením košíku doplňte v `server/checkout-apps-script/Code.gs` fakturační jméno, adresu, IČO a český IBAN. Splatnost je nastavená na 14 dní a lze ji upravit. `taxMode` nastavte na `non-vat` pouze pro potvrzeného neplátce DPH. Sazby DPH a datum uskutečnění plnění pro plátce ještě vyžadují doplnění. V `katalog.json` schvalte produkty a ceny pomocí `catalogReady` a podle potřeby nastavte `checkoutShippingPrice` v celých Kč. Hodnota `null` znamená, že doprava není k dispozici.
+Před připojením košíku doplňte v `server/checkout-apps-script/Code.gs` fakturační jméno, adresu, IČO a český IBAN. Splatnost je nastavená na 14 dní a lze ji upravit. `taxMode` nastavte na `non-vat` pouze pro potvrzeného neplátce DPH. Sazby DPH a datum uskutečnění plnění pro plátce ještě vyžadují doplnění. V `katalog.json` schvalte produkty a ceny pomocí `catalogReady`. Doprava stojí `checkoutShippingPrice` Kč a je zdarma, pokud hodnota výrobků přesáhne `checkoutFreeShippingAbove` Kč. Hodnota `null` u ceny dopravy vypíná zasílání, u hranice vypíná dopravu zdarma.
 
 1. Sestavte nový `Checkout.gs` a vložte ho do **samostatného** projektu Google Apps Script. Nasaďte webovou aplikaci s volbami **Provést jako → Já** a **Kdo má přístup → Kdokoli**. Schvalte oprávnění k odesílání e-mailů a načítání veřejného katalogu přes `UrlFetchApp`.
 2. Vložte adresu `/exec` do `checkoutScriptUrl` v `katalog.json`. Na GitHub Pages publikujte `katalog.json` v kořeni webu spolu s aktualizovanými soubory košíku a katalogu. Sestavení přes Vite ho přidá do kořene `dist`.
 3. Ověřte zkušební objednávku a obě PDF přílohy. Převod používá QR platbu SPAYD s částkou v Kč, IBANem a variabilním symbolem shodným s číslem dokladu. Při platbě při převzetí uvádí faktura odpovídající způsob úhrady.
 
 Při změně výrobků, popisů nebo cen stačí zveřejnit nový `katalog.json`. Košík i skript čtou tentýž veřejný soubor. Skript ověří celkovou cenu a při rozdílu požádá o obnovení košíku. Na faktuře uvádí každý výrobek s množstvím, jednotkovou cenou a cenou za řádek. Při doručení přidá dopravu samostatně.
+
+S nastaveným `checkoutScriptUrl` a `checkoutTestInvoices: true` se celý průchod objednávky provede přes Apps Script. Oba e-maily skutečně odejdou, objednávky mají vlastní číselnou řadu a PDF je označené **VZOR - NEPLAŤTE**. Platba převodem má ukázkový QR kód. Pro tento režim může `catalogReady` zůstat `false`. Před ostrým prodejem nastavte `checkoutTestInvoices: false` a `catalogReady: true` a doplňte fakturační údaje v Apps Scriptu. Pokud jsou obě hodnoty `false`, košík ověřuje formulář a cenu bez odeslání údajů.
 
 Číslování dokladů a stav odeslání se ukládají ve vlastnostech projektu Apps Script. Při aktualizaci kódu používejte novou verzi téhož nasazení. Kód pro kontaktní formulář je v samostatném projektu.
 

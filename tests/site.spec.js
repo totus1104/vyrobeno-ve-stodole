@@ -474,6 +474,33 @@ test('zkušební košík ověří doručení a cenu bez odeslání údajů', asy
   expect(posts).toEqual([]);
 });
 
+test('testovací faktura projde přes Apps Script s cenami ze zkušebního katalogu', async ({ page }) => {
+  const endpoint = 'https://script.google.com/macros/s/checkout-test/exec';
+  await page.route('**/katalog.json', route => route.fulfill({ json: {
+    catalogReady: false, checkoutTestInvoices: true, checkoutScriptUrl: endpoint,
+    checkoutShippingPrice: 100, checkoutFreeShippingAbove: 1000,
+    products: [{ id: 'test', name: 'Zkušební výrobek', description: '', price: 1470 }],
+  } }));
+  await page.route(endpoint, route => {
+    const order = JSON.parse(new URLSearchParams(route.request().postData()).get('payload'));
+    expect(order).toMatchObject({ email: 'jana@example.com', delivery: 'shipping', payment: 'transfer', expectedTotal: 1470 });
+    const reply = JSON.stringify({ ok: true, number: 'TEST-2026000001', total: 1470, test: true, requestId: order.requestId });
+    return route.fulfill({ contentType: 'text/html; charset=utf-8',
+      body: `<script>window.top.postMessage(${reply}, ${JSON.stringify(new URL(page.url()).origin)});</script>` });
+  });
+  await page.goto('/obchod.html');
+  await page.getByRole('button', { name: 'Přidat do košíku: Zkušební výrobek' }).click();
+  await page.getByRole('link', { name: 'Přejít do košíku' }).click();
+  const form = page.locator('#shop-checkout');
+  for (const [key, value] of Object.entries({ name: 'Jana Ukázková', email: 'jana@example.com', street: 'Ukázková 12', city: 'Plzeň', postcode: '30100' })) {
+    await form.locator(`#shop-${key}`).fill(value);
+  }
+  await form.getByRole('radio', { name: 'Doručení na uvedenou adresu' }).check();
+  await form.getByRole('radio', { name: 'Převodem (QR platba ve faktuře)' }).check();
+  await form.getByRole('button', { name: 'Odeslat objednávku' }).click();
+  await expect(page.locator('#shop-result')).toHaveText(/Zkušební objednávka TEST-2026000001.*Vzor faktury jsme odeslali e-mailem/);
+});
+
 for (const width of [360, 768, 1440]) {
   test(`rozložení všech stránek při ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });

@@ -13,6 +13,7 @@ const SHOP = {
 };
 const PAYMENT_NAMES = { transfer: 'Bankovním převodem', pickup: 'Při převzetí' };
 const DELIVERY_NAMES = { pickup: 'Osobní odběr', shipping: 'Doručení' };
+const SAMPLE_IBAN = 'CZ9106000000000000000123';
 class CheckoutError extends Error {}
 
 function doPost(event) {
@@ -25,10 +26,6 @@ function doPost(event) {
     requestId = data.requestId;
     const order = readOrder_(data);
     if (!order) return checkoutReply_(requestId, { ok: false, error: 'Zkontrolujte údaje a obsah košíku.' });
-    if (!SHOP.legalName.trim() || !SHOP.address.trim() ||
-        !/^\d{8}$/.test(SHOP.ico) || SHOP.taxMode !== 'non-vat' || !normalizeCheckoutIban_(SHOP.iban)) {
-      return checkoutReply_(requestId, { ok: false, error: 'Objednávková služba se připravuje.' });
-    }
     const receipt = sendOrder_(order, data.key);
     return checkoutReply_(requestId, { ok: true, ...receipt });
   } catch (error) {
@@ -73,7 +70,8 @@ function loadCatalog_() {
     const response = UrlFetchApp.fetch(SHOP.catalogUrl, { followRedirects: false, headers: { 'Cache-Control': 'no-cache' } });
     if (response.getResponseCode() !== 200) throw new Error('Catalog HTTP error');
     const catalog = JSON.parse(response.getContentText());
-    if (catalog.catalogReady === true && Array.isArray(catalog.products) && Number.isSafeInteger(catalog.maxQuantity) && catalog.maxQuantity > 0) return catalog;
+    if ((catalog.catalogReady === true || catalog.checkoutTestInvoices === true) && Array.isArray(catalog.products) &&
+        Number.isSafeInteger(catalog.maxQuantity) && catalog.maxQuantity > 0) return catalog;
   } catch (error) {
     console.warn(`Načtení katalogu selhalo. ${error.name || 'Error'}`);
   }
@@ -89,12 +87,16 @@ function priceOrder_(order, catalog) {
         entry.quantity > catalog.maxQuantity) throw new CheckoutError(updated);
     lines.push({ name: product.name, quantity: entry.quantity, price: product.price });
   }
+  const subtotal = lines.reduce((sum, line) => sum + line.quantity * line.price, 0);
+  let total = subtotal;
   if (order.delivery === 'shipping') {
     const shipping = catalog.checkoutShippingPrice;
     if (!Number.isSafeInteger(shipping) || shipping < 0) throw new CheckoutError(updated);
-    lines.push({ name: 'Doprava', quantity: 1, price: shipping });
+    const freeAbove = catalog.checkoutFreeShippingAbove;
+    const price = Number.isSafeInteger(freeAbove) && subtotal > freeAbove ? 0 : shipping;
+    lines.push({ name: 'Doprava', quantity: 1, price });
+    total += price;
   }
-  const total = lines.reduce((sum, line) => sum + line.quantity * line.price, 0);
   if (total !== order.expectedTotal) throw new CheckoutError(updated);
   return { lines, total };
 }
@@ -110,25 +112,37 @@ function sendOrder_(order, key) {
     let state = existing ? JSON.parse(existing) : null;
     if (state && state.digest !== digest) throw new Error('Order changed');
     if (!state) {
-      const pricing = priceOrder_(order, loadCatalog_());
+      const catalog = loadCatalog_();
+      const test = catalog.checkoutTestInvoices === true;
+      if (!test) requireBillingSettings_();
+      const pricing = priceOrder_(order, catalog);
       const now = new Date();
       const year = Utilities.formatDate(now, 'Europe/Prague', 'yyyy');
-      const counterKey = `sequence:${year}`;
+      const counterKey = `${test ? 'test-sequence' : 'sequence'}:${year}`;
       const next = Number(props.getProperty(counterKey) || 0) + 1;
       if (next > 999999) throw new Error('Invoice sequence exhausted');
-      state = { number: year + String(next).padStart(6, '0'), time: now.toISOString(), digest, pricing };
+      state = { number: year + String(next).padStart(6, '0'), time: now.toISOString(), digest, pricing, test };
       props.setProperties({ [counterKey]: String(next), [storageKey]: JSON.stringify(state) });
     }
+    const test = state.test === true;
+    const number = test ? `TEST-${state.number}` : state.number;
     const pricedOrder = { ...order, ...state.pricing };
     if (!state.ownerSent || !state.customerSent) {
-      const pdf = HtmlService.createHtmlOutput(invoiceHtml_(SHOP, pricedOrder, state.number, state.time))
-        .getAs('application/pdf').setName(`faktura-${state.number}.pdf`);
+      if (!test) requireBillingSettings_();
+      const supplier = test ? { ...SHOP, legalName: '', address: '', ico: '', iban: SAMPLE_IBAN } : SHOP;
+      const pdf = HtmlService.createHtmlOutput(invoiceHtml_(supplier, pricedOrder, state.number, state.time, test))
+        .getAs('application/pdf').setName(`faktura-${number}.pdf`);
       if (!state.ownerSent) {
         const details = [order.name, order.email, order.street, `${order.postcode} ${order.city}`,
           DELIVERY_NAMES[order.delivery], PAYMENT_NAMES[order.payment], '',
           ...pricedOrder.lines.map(line => `${line.name} × ${line.quantity}: ${czk_(line.price * line.quantity)} Kč`),
           `Celkem: ${czk_(pricedOrder.total)} Kč`].join('\n');
-        MailApp.sendEmail({ to: SHOP.recipient, replyTo: order.email, subject: `Vyrobeno ve stodole – objednávka ${state.number}`, body: details, attachments: [pdf] });
+        MailApp.sendEmail({
+          to: SHOP.recipient, replyTo: order.email,
+          subject: `Vyrobeno ve stodole – ${test ? 'zkušební ' : ''}objednávka ${number}`,
+          body: test ? `Zkušební objednávka. Přiložený doklad je vzor a není určen k úhradě.\n\n${details}` : details,
+          attachments: [pdf],
+        });
         state.ownerSent = true;
         props.setProperty(storageKey, JSON.stringify(state));
       }
@@ -136,17 +150,26 @@ function sendOrder_(order, key) {
         const paymentText = order.payment === 'transfer' ? 'Platební údaje a QR kód najdete ve faktuře.' : 'Objednávku uhradíte při převzetí.';
         MailApp.sendEmail({
           to: order.email, replyTo: SHOP.recipient,
-          subject: `Potvrzení objednávky ${state.number} – Vyrobeno ve stodole`,
-          body: `Dobrý den,\n\nděkuji za Vaši objednávku. V příloze najdete fakturu. ${paymentText}\n\nVyrobeno ve stodole`,
+          subject: `Potvrzení ${test ? 'zkušební ' : ''}objednávky ${number} – Vyrobeno ve stodole`,
+          body: test
+            ? 'Dobrý den,\n\nzkušební objednávka byla přijata. V příloze je vzor faktury. Platbu prosím neprovádějte.\n\nVyrobeno ve stodole'
+            : `Dobrý den,\n\nděkuji za Vaši objednávku. V příloze najdete fakturu. ${paymentText}\n\nVyrobeno ve stodole`,
           attachments: [pdf],
         });
         state.customerSent = true;
         props.setProperty(storageKey, JSON.stringify(state));
       }
     }
-    return { number: state.number, total: pricedOrder.total };
+    return { number, total: pricedOrder.total, test };
   } finally {
     lock.releaseLock();
+  }
+}
+
+function requireBillingSettings_() {
+  if (!SHOP.legalName.trim() || !SHOP.address.trim() ||
+      !/^\d{8}$/.test(SHOP.ico) || SHOP.taxMode !== 'non-vat' || !normalizeCheckoutIban_(SHOP.iban)) {
+    throw new CheckoutError('Pro ostrý provoz chybí fakturační údaje.');
   }
 }
 
