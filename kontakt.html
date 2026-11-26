@@ -57,10 +57,9 @@
         <section class="form-panel" aria-labelledby="form-title">
           <h2 id="form-title">Formulář</h2>
           <noscript><p class="notice">Pro použití formuláře zapněte JavaScript.</p></noscript>
-          <form id="inquiry-form" action="https://formsubmit.co/zrzek.10@gmail.com" method="post" enctype="multipart/form-data" novalidate>
+          <form id="inquiry-form" data-apps-script-url="https://script.google.com/macros/s/AKfycbxauqLOOvJADihV0RTS1gUPxEfMcnNgMtNzVIdj8JL1fZC9DuXl9omSJVs_DpPl0FaxXA/exec" novalidate>
             <fieldset id="form-fields" disabled>
               <legend class="visually-hidden">Údaje pro nezávaznou poptávku</legend>
-              <input type="hidden" name="_subject" value="Nová poptávka – Vyrobeno ve stodole" />
               <div class="field">
                 <label for="full-name">
                   Jméno a příjmení
@@ -85,6 +84,7 @@
                     id="email"
                     name="email"
                     type="email"
+                    maxlength="254"
                     autocomplete="email"
                     required
                     aria-describedby="email-error"
@@ -100,6 +100,7 @@
                     id="phone"
                     name="phone"
                     type="tel"
+                    maxlength="50"
                     autocomplete="tel"
                     aria-describedby="phone-error"
                   />
@@ -115,6 +116,7 @@
                   id="description"
                   name="description"
                   rows="5"
+                  maxlength="10000"
                   placeholder="Co byste si přáli vyrobit?"
                   aria-describedby="description-hint"
                 ></textarea>

@@ -1,4 +1,5 @@
 import { addAttachments, MAX_BYTES, validateContact } from './validation.js';
+import { sendInquiry } from './inquiry-mail.js';
 import { initHeroCarousel } from './carousel.js';
 import { updateCartIcon } from './cart-state.js';
 import { header, footer } from './layout.js';
@@ -63,6 +64,7 @@ if (form) {
   const attachmentError = document.querySelector('#attachments-error');
   const dismissAttachmentErrors = document.querySelector('#dismiss-attachment-errors');
   const result = document.querySelector('#form-result');
+  const fieldset = document.querySelector('#form-fields');
   let selectedFiles = [];
   let attachmentErrors = [];
   let submitted = false;
@@ -137,30 +139,40 @@ if (form) {
     });
   });
   form.addEventListener('input', () => { result.textContent = ''; });
-  form.addEventListener('formdata', ({ formData }) => {
-    // Cross-origin referrers omit the project path on GitHub Pages.
-    formData.set('_url', window.location.origin + window.location.pathname);
-    // The picker is cleared after each selection. Send the files still shown in the list.
-    formData.delete(input.name);
-    selectedFiles.forEach((file, index) => formData.append(`attachment${index + 1}`, file));
-  });
-  form.addEventListener('submit', event => {
+  form.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (fieldset.disabled) return;
     submitted = true;
     result.textContent = '';
-    const errors = validateContact(Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, field.value])));
+    const contact = Object.fromEntries(Object.entries(fields).map(([key, field]) => [key, field.value]));
+    const errors = validateContact(contact);
     for (const [key, field] of Object.entries(fields)) showFieldError(field, errors[key]);
     renderAttachmentErrors();
     const firstInvalid = Object.keys(errors)[0];
     if (firstInvalid || attachmentErrors.length) {
-      event.preventDefault();
       (fields[firstInvalid] ?? input).focus();
       return;
     }
+    fieldset.disabled = true;
     result.textContent = 'Odesílám poptávku…';
+    try {
+      const orderNumber = await sendInquiry(form.dataset.appsScriptUrl, {
+        email: contact.email.trim(),
+        phone: contact.phone.trim(),
+        description: form.elements.description.value.trim(),
+      }, selectedFiles);
+      resetForm();
+      result.textContent = `Poptávka byla odeslána. Číslo objednávky ${orderNumber}.`;
+    } catch (error) {
+      result.textContent = error.message;
+    } finally {
+      fieldset.disabled = false;
+      result.focus();
+    }
   });
-  document.querySelector('#form-fields').disabled = false;
-  // Clear personal data retained by a browser's back/forward cache.
-  window.addEventListener('pagehide', () => {
+  fieldset.disabled = false;
+
+  function resetForm() {
     form.reset();
     selectedFiles = [];
     attachmentErrors = [];
@@ -169,5 +181,7 @@ if (form) {
     renderFiles();
     renderAttachmentErrors();
     result.textContent = '';
-  });
+  }
+  // Clear personal data retained by a browser's back/forward cache.
+  window.addEventListener('pagehide', resetForm);
 }

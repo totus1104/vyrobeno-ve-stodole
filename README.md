@@ -20,14 +20,14 @@ npm run preview
 
 Build vytvoří šest stránek ve složce `dist`. Zdrojové HTML otevírejte přes Vite, nikoli přímo přes `file://`. Sestavený web včetně objednávkového API spustíte přes `npm start`.
 
-Při přímém zveřejnění zdrojových souborů na statickém hostingu, například GitHub Pages, doplní hlavičku a patičku prohlížeč z `src/main.js` a `src/layout.js`. Objednávky z obchodu a jejich e-maily vyžadují server spuštěný přes Node.js. Nezávazné poptávky z kontaktní stránky odesílá FormSubmit.
+Při přímém zveřejnění zdrojových souborů na statickém hostingu, například GitHub Pages, doplní hlavičku a patičku prohlížeč z `src/main.js` a `src/layout.js`. Objednávky z obchodu a jejich e-maily vyžadují server spuštěný přes Node.js. Poptávky z kontaktní stránky odesílá samostatný Google Apps Script.
 
 ## Stránky a úpravy
 
 - `index.html` — úvod přes celou šířku s hlavním nadpisem na průsvitném bílém podkladu přes čtyři střídající se snímky. Pod ním představení a pět kroků spolupráce podle Word podkladu. První snímek již používá dodanou fotografii dubové postele s osvětlením; třetí obsahuje knihovnu s pracovním stolem a druhý i čtvrtý čekají na dodání.
 - `o-stodole.html` — úplný příběh a přístup obsahově podle dokumentu v pořadí Cesta k řemeslu, Moje dílna (přeškrtnutá) stodola, Jak pracuji. Tři místa pro fotografie se na počítači střídají vlevo a vpravo; na mobilu následuje u každého bloku text a fotografie. Slovo dílna je natočené i s přeškrtnutím. Pohled do stodoly dostává širší pravý sloupec a formát 16 : 10. Část Jak pracuji má jeden společný obrázek vlevo a všechny tři textové části vpravo. Jak pracuji obsahuje Materiál, Spolupráci s osobní domluvou a Možnosti výroby s otevřenou komunikací, bez číslování. Zmínku o e-shopu podle upřesnění uživatele nahrazuje odkaz na Galerii. Závěrečná výzva k poptávce je zachovaná. Texty Spolupráce a Možnosti výroby mají sloučené související odstavce a kompaktnější rozestupy bez změny obsahu.
 - `galerie.html` — sedm fotografií s názvy na průsvitném bílém podkladu. Výběrem fotografie se otevře detail se zvětšeným snímkem, názvem a případným popisem. Popis zapište do odstavce uvnitř `<template class="gallery-description">` u příslušné fotografie. Můžete přidat i další odstavce. Prázdný popis se v detailu nezobrazuje.
-- `kontakt.html` — kontaktní údaje, pokyny k nezávazné poptávce a formulář odesílaný přes FormSubmit. Povinné údaje vysvětluje titulek hvězdičky při najetí myší a atribut `required`. Telefon je nepovinný, vyplněné číslo se validuje.
+- `kontakt.html` — kontaktní údaje, pokyny k nezávazné poptávce a formulář odesílaný přes Google Apps Script. Povinné údaje vysvětluje titulek hvězdičky při najetí myší a atribut `required`. Telefon je nepovinný, vyplněné číslo se validuje.
 - `obchod.html` — katalog s přidáváním do košíku. Ukázkové položky a ceny jsou v `src/shop-catalog.js`.
 - `kosik.html` — samostatný košík s osobními údaji, doručovací adresou, výběrem odběru či doručení a platbou. Ikona v hlavičce ukazuje počet kusů.
 - `src/layout.js` — společná hlavička, navigace a patička, vkládané Vitem při vývoji i sestavení.
@@ -41,9 +41,14 @@ Hlavní sekce stránek oddělují stejné jemné linky přes celou šířku; gal
 
 ## Poptávkový formulář na GitHub Pages
 
-Formulář odesílá poptávku a soubory přes `multipart/form-data` na adresu FormSubmit uvedenou v atributu `action` v `kontakt.html`. Přílohy lze vybírat postupně až do celkové velikosti 10 000 000 bajtů. Formulář vyžaduje JavaScript pro kontrolu vstupů a sestavení seznamu příloh. Před odesláním uchovává vyplněné údaje a přílohy v paměti stránky. Při opuštění stránky formulář vyčistí.
+Skript [`server/Code.gs`](server/Code.gs) odesílá poptávky na `zrzek.10@gmail.com`. Předmět používá datum a čas v pásmu `Europe/Prague`. Adresa zákazníka je v těle zprávy i v poli `Reply-To`. Vybrané soubory do 10 MB celkem připojuje jako přílohy e-mailu.
 
-Nahrajte změny do zdroje aktuálního nasazení GitHub Pages. Pokud publikujete výstup Vite, nejprve spusťte `npm run build` a nasaďte obsah složky `dist` stávajícím postupem. Na zveřejněné stránce Kontakt odešlete první zkušební poptávku, potvrďte aktivační e-mail od FormSubmit a po aktivaci odešlete druhou poptávku s fotkou. Ověřte doručení e-mailu i přílohy. [Návod FormSubmit](https://formsubmit.co/)
+1. Na [Google Apps Script](https://script.google.com/) vytvořte projekt, vložte obsah `server/Code.gs` do editoru a uložte ho.
+2. Zvolte **Nasadit → Nové nasazení → Webová aplikace**. Nastavte **Spustit jako → Já** a **Kdo má přístup → Kdokoli**. Při prvním nasazení povolte vlastnímu skriptu odesílání e-mailů. [Nasazení webové aplikace](https://developers.google.com/apps-script/guides/web#deploy_a_script_as_a_web_app)
+3. Vložte adresu nasazení končící `/exec` do atributu `data-apps-script-url` formuláře v `kontakt.html`. Při přímém publikování přes GitHub Pages nahrajte `kontakt.html`, `src/main.js` a `src/inquiry-mail.js`. Při publikování sestaveného webu spusťte `npm run build` a nasaďte obsah `dist`.
+4. Otevřete zveřejněnou stránku Kontakt a odešlete zkušební poptávku s fotkou. Ověřte potvrzení na stránce, důležité údaje a přílohu v doručeném e-mailu.
+
+Po úpravě `Code.gs` nasazujte novou verzi přes **Nasadit → Spravovat nasazení**, aby zůstala stejná adresa `/exec`. Pokud se změní doména webu, upravte ve skriptu hodnotu `SITE_ORIGIN`. Potvrzení ze skutečného nasazení je nastavené pro aktuální doménu GitHub Pages.
 
 ## Objednávky a QR platby
 
@@ -82,7 +87,7 @@ Sestavení ověří příkaz `npm run build`. Příkaz `npm test` spouští kont
 - Mobilní menu kliknutím a klávesnicí, Escape, focus, přechod na stránku a změna šířky na desktop.
 - Galerie: načtení sedmi snímků, zachování jejich poměru stran, překryvné názvy, jedna závěrečná linka a otevření detailu s názvem, větší fotografií a volitelným popisem.
 - Změny množství a přepočet součtu v košíku, volba platby a uložení zkušební objednávky na serveru.
-- Prázdná a neplatná povinná pole, mezinárodní telefony, focus na první chybu a sestavení požadavku FormSubmit. Test zachytí požadavek v prohlížeči bez odeslání skutečného e-mailu.
+- Prázdná a neplatná povinná pole, mezinárodní telefony, focus na první chybu a zpracování odpovědi Apps Script. Testy ověřují předmět, tělo, adresu pro odpověď a přílohy s náhradou za službu `MailApp`.
 - Všechny povolené přípony, postupné přidávání, nepovolený formát, přesných 10 000 000 bajtů, překročení o jediný bajt, nadlimitní jednotlivý soubor i součet, odebrání a opakovaný výběr stejného souboru.
 - Všechny stránky při šířkách 360, 768 a 1440 px bez vodorovného přetékání; snímky jsou v ignorované složce `test-results`.
 - Zvětšení textu na 200 % při 360 px, omezený pohyb, viditelný focus a přeskočení na obsah.

@@ -155,8 +155,6 @@ test('surové HTML v podsložce zobrazí logo, navigaci i patičku', async ({ pa
   await page.getByRole('navigation').getByRole('link', { name: 'Kontakt' }).click();
   await expect(page).toHaveURL(/publikovany-web\/kontakt\.html$/);
   await expect(page.getByRole('navigation').getByRole('link', { name: 'Kontakt' })).toHaveAttribute('aria-current', 'page');
-  const sourceUrl = await page.locator('#inquiry-form').evaluate(form => new FormData(form).get('_url'));
-  expect(sourceUrl).toBe(page.url());
   expect(errors).toEqual([]);
 });
 
@@ -266,14 +264,21 @@ test('galerie zachovává rozložení fotografií a otevírá jejich detail', as
   expect(await nextDetail.locator('.gallery-dialog-description').evaluate(element => element.scrollLeft)).toBeGreaterThan(0);
 });
 
-test('formulář blokuje chyby a posílá jen vybrané přílohy přes FormSubmit', async ({ page }) => {
-  const formSubmitUrl = 'https://formsubmit.co/**';
-  await page.route(formSubmitUrl, route => route.fulfill({
-    contentType: 'text/html; charset=utf-8',
-    body: 'Testovací potvrzení',
-  }));
-  await page.goto('/kontakt.html?overeni=formsubmit');
-  const contactUrl = new URL('/kontakt.html', page.url()).href;
+test('formulář ověřuje vstupy a zpracuje odpověď Google Apps Script', async ({ page }) => {
+  const scriptUrl = 'https://script.google.com/macros/s/inquiry-mail-test/exec';
+  let acceptInquiry = false;
+  await page.route(scriptUrl, route => {
+    const { requestId } = JSON.parse(new URLSearchParams(route.request().postData()).get('payload'));
+    const result = acceptInquiry
+      ? { requestId, ok: true, orderNumber: '2026-11-26-1802' }
+      : { requestId, ok: false, error: 'Zkušební chyba odeslání.' };
+    return route.fulfill({
+      contentType: 'text/html; charset=utf-8',
+      body: `<script>window.top.postMessage(${JSON.stringify(result)}, ${JSON.stringify(new URL(page.url()).origin)});</script>`,
+    });
+  });
+  await page.goto('/kontakt.html');
+  await page.locator('#inquiry-form').evaluate((form, url) => { form.dataset.appsScriptUrl = url; }, scriptUrl);
   const requests = [];
   page.on('request', req => requests.push(`${req.method()} ${req.url()}`));
   await page.getByRole('button', { name: 'Odeslat formulář' }).click();
@@ -302,20 +307,24 @@ test('formulář blokuje chyby a posílá jen vybrané přílohy přes FormSubmi
   expect(await page.evaluate(() => [localStorage.length, sessionStorage.length])).toEqual([0, 0]);
   await page.getByRole('button', { name: 'Pokračovat bez odmítnutých souborů' }).click();
   const [submission] = await Promise.all([
-    page.waitForRequest(formSubmitUrl),
+    page.waitForRequest(scriptUrl),
     page.getByRole('button', { name: 'Odeslat formulář' }).click(),
   ]);
   expect(submission.method()).toBe('POST');
-  expect(submission.headers()['content-type']).toMatch(/^multipart\/form-data; boundary=/);
-  const body = submission.postData();
-  expect(body).toContain(`name="_url"\r\n\r\n${contactUrl}\r\n`);
-  expect(body).toContain('name="email"\r\n\r\nnavstevnik@example.com');
-  expect(body).toContain('name="description"\r\n\r\nTestovací popis.');
-  expect(body).toContain('name="attachment1"; filename="fotka.jpg"');
-  expect(body).toContain('name="attachment2"; filename="nacrt.png"');
-  expect(body).not.toContain('odebrana.pdf');
-  expect(body).not.toContain('nepovoleny.exe');
-  await expect(page.locator('body')).toHaveText('Testovací potvrzení');
+  const payload = JSON.parse(new URLSearchParams(submission.postData()).get('payload'));
+  expect(payload).toMatchObject({ email: validContact.email, phone: '', description: 'Testovací popis.' });
+  expect(payload.attachments.map(file => file.name)).toEqual(['fotka.jpg', 'nacrt.png']);
+  expect(Buffer.from(payload.attachments[0].data, 'base64url')).toEqual(Buffer.alloc(100));
+  const result = page.locator('#form-result');
+  await expect(result).toHaveText('Zkušební chyba odeslání.');
+  await expect(page.locator('#email')).toHaveValue(validContact.email);
+  await expect(page.locator('#file-list li')).toHaveCount(2);
+
+  acceptInquiry = true;
+  await page.getByRole('button', { name: 'Odeslat formulář' }).click();
+  await expect(result).toHaveText('Poptávka byla odeslána. Číslo objednávky 2026-11-26-1802.');
+  await expect(page.locator('#email')).toHaveValue('');
+  await expect(page.locator('#file-list li')).toHaveCount(0);
 });
 
 test('přílohy: formáty, přírůstky, limit, odmítnutí, odebrání a opakovaný výběr', async ({ page }) => {
