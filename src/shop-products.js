@@ -1,4 +1,4 @@
-import { catalogReady, checkoutScriptUrl, maxQuantity, products } from './shop-catalog.js';
+import { catalogReady, checkoutScriptUrl, checkoutTestInvoices, maxQuantity, products } from './shop-catalog.js';
 import { readCart, writeCart } from './cart-state.js';
 
 const catalog = document.querySelector('#shop-products');
@@ -52,7 +52,7 @@ function showPreview() {
 }
 
 if (checkoutScriptUrl) {
-  if (!catalogReady) showPreview();
+  if (!catalogReady || checkoutTestInvoices) showPreview();
 } else try {
   const response = await fetch('./api/shop/status');
   if (!response.ok) throw new Error();

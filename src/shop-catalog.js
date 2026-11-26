@@ -11,6 +11,7 @@ try {
 
 export const products = Array.isArray(catalog?.products) ? catalog.products : [];
 export const catalogReady = products.length > 0 && catalog?.catalogReady === true;
+export const checkoutTestInvoices = products.length > 0 && catalog?.checkoutTestInvoices === true;
 export const maxQuantity = catalog?.maxQuantity ?? 20;
 export const checkoutScriptUrl = catalog?.checkoutScriptUrl || '';
 export const checkoutShippingPrice = catalog?.checkoutShippingPrice ?? null;

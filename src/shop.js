@@ -1,4 +1,4 @@
-import { catalogReady, maxQuantity, checkoutShippingPrice, checkoutFreeShippingAbove, checkoutScriptUrl as scriptUrl } from './shop-catalog.js';
+import { catalogReady, checkoutTestInvoices, maxQuantity, checkoutShippingPrice, checkoutFreeShippingAbove, checkoutScriptUrl as scriptUrl } from './shop-catalog.js';
 import { readCart, writeCart } from './cart-state.js';
 import { postAppsScript } from './inquiry-mail.js';
 
@@ -108,7 +108,7 @@ window.addEventListener('pageshow', event => {
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (processing || !canSubmit || !cart.size || !form.reportValidity()) return;
-  if (scriptUrl && !catalogReady) {
+  if (scriptUrl && !catalogReady && !checkoutTestInvoices) {
     const previewTotal = totalWithDelivery(form.elements.delivery.value);
     result.hidden = false;
     result.textContent = `Zkušební objednávka za ${money.format(previewTotal)} je v pořádku. Údaje zůstaly v prohlížeči.`;
@@ -128,7 +128,9 @@ form.addEventListener('submit', async event => {
   try {
     const saved = await submitOrder({ ...order, key: lastSubmission.key });
     result.textContent = scriptUrl
-      ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Fakturu jsme odeslali e-mailem.`
+      ? saved.test === true
+        ? `Zkušební objednávka ${saved.number} za ${money.format(saved.total)} prošla. Vzor faktury jsme odeslali e-mailem.`
+        : `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Fakturu jsme odeslali e-mailem.`
       : live
       ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Vyčkejte na potvrzení termínu a ceny. Zatím nic neplaťte.`
       : `Zkušební objednávka ${saved.number} za ${money.format(saved.total)} byla uložena. E-maily zůstávají v místním náhledu.`;
@@ -173,9 +175,11 @@ cartPanel.hidden = false;
 renderCart();
 if (scriptUrl) {
   canSubmit = true;
-  document.querySelector('#shop-preview').hidden = catalogReady;
-  submitStatus.hidden = catalogReady;
-  submitStatus.textContent = 'Zkušební režim. Odesláním ověříte vyplnění a celkovou cenu.';
+  document.querySelector('#shop-preview').hidden = catalogReady && !checkoutTestInvoices;
+  submitStatus.hidden = catalogReady && !checkoutTestInvoices;
+  submitStatus.textContent = checkoutTestInvoices
+    ? 'Zkušební režim. Vzor faktury přijde na zadaný e-mail.'
+    : 'Zkušební režim. Odesláním ověříte vyplnění a celkovou cenu.';
   const shipping = form.querySelector('[value="shipping"]');
   shipping.disabled = checkoutShippingPrice === null;
   const shippingHint = checkoutShippingPrice === null
