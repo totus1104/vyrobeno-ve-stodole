@@ -14,7 +14,7 @@
   <body>
     <!--site-header-->
     <main id="obsah" tabindex="-1">
-      <section class="container page-intro"><h1>Kontakt</h1></section>
+      <h1 class="visually-hidden">Kontakt</h1>
       <hr class="section-divider" />
       <div class="container contact-layout">
         <aside class="contact-aside">
@@ -38,7 +38,7 @@
             </div>
             <div>
               <dt>Oblast působnosti</dt>
-              <dd>Plzeňský kraj, Středočeský kraj</dd>
+              <dd>Plzeňský a Středočeský kraj</dd>
             </div>
           </dl>
           <div class="contact-help">
@@ -57,9 +57,10 @@
         <section class="form-panel" aria-labelledby="form-title">
           <h2 id="form-title">Formulář</h2>
           <noscript><p class="notice">Pro použití formuláře zapněte JavaScript.</p></noscript>
-          <form id="inquiry-form" novalidate>
+          <form id="inquiry-form" action="https://formsubmit.co/karel.kvasnicka42@gmail.com" method="post" enctype="multipart/form-data" novalidate>
             <fieldset id="form-fields" disabled>
               <legend class="visually-hidden">Údaje pro nezávaznou poptávku</legend>
+              <input type="hidden" name="_subject" value="Nová poptávka – Vyrobeno ve stodole" />
               <div class="field">
                 <label for="full-name">
                   Jméno a příjmení
@@ -124,7 +125,7 @@
               <div class="field attachment-field">
                 <label for="attachments">Přílohy</label>
                 <p class="field-hint" id="attachments-hint">
-                  PDF, JPG/JPEG, PNG, DOC nebo DOCX (max 15 MB)
+                  PDF, JPG/JPEG, PNG, DOC nebo DOCX (max. 10 MB celkem)
                 </p>
                 <input
                   id="attachments"
