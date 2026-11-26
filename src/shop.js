@@ -1,4 +1,4 @@
-import { catalogReady, maxQuantity, checkoutShippingPrice, checkoutScriptUrl as scriptUrl } from './shop-catalog.js';
+import { catalogReady, maxQuantity, checkoutShippingPrice, checkoutFreeShippingAbove, checkoutScriptUrl as scriptUrl } from './shop-catalog.js';
 import { readCart, writeCart } from './cart-state.js';
 import { postAppsScript } from './inquiry-mail.js';
 
@@ -27,8 +27,7 @@ let lastSubmission;
 function syncCheckout() {
   submitButton.disabled = processing || !canSubmit || !form.matches(':valid');
   if (scriptUrl) {
-    const shipping = form.elements.delivery.value === 'shipping' ? checkoutShippingPrice ?? 0 : 0;
-    totalLabel.textContent = money.format(total() + shipping);
+    totalLabel.textContent = money.format(totalWithDelivery(form.elements.delivery.value));
   }
 }
 
@@ -48,6 +47,13 @@ function button(text, className, label) {
 
 function total() {
   return [...cart].reduce((sum, [product, quantity]) => sum + product.price * quantity, 0);
+}
+
+function totalWithDelivery(delivery) {
+  const subtotal = total();
+  if (delivery !== 'shipping' || checkoutShippingPrice === null) return subtotal;
+  const freeShipping = checkoutFreeShippingAbove !== null && subtotal > checkoutFreeShippingAbove;
+  return subtotal + (freeShipping ? 0 : checkoutShippingPrice);
 }
 
 function setQuantity(product, quantity) {
@@ -102,6 +108,13 @@ window.addEventListener('pageshow', event => {
 form.addEventListener('submit', async event => {
   event.preventDefault();
   if (processing || !canSubmit || !cart.size || !form.reportValidity()) return;
+  if (scriptUrl && !catalogReady) {
+    const previewTotal = totalWithDelivery(form.elements.delivery.value);
+    result.hidden = false;
+    result.textContent = `Zkušební objednávka za ${money.format(previewTotal)} je v pořádku. Údaje zůstaly v prohlížeči.`;
+    result.focus();
+    return;
+  }
   const data = Object.fromEntries(new FormData(form));
   const order = { ...data, items: [...cart].map(([product, quantity]) => ({ id: product.id, quantity })) };
   const details = JSON.stringify(order);
@@ -138,7 +151,7 @@ form.addEventListener('submit', async event => {
 
 async function submitOrder(order) {
   if (scriptUrl) {
-    const expectedTotal = total() + (order.delivery === 'shipping' ? checkoutShippingPrice ?? 0 : 0);
+    const expectedTotal = totalWithDelivery(order.delivery);
     const reply = await postAppsScript(scriptUrl, { ...order, expectedTotal }, 'Odeslání se nepodařilo potvrdit. Košík zůstal zachován. Zkuste odeslání zopakovat.');
     if (reply.ok !== true) throw new Error(reply.error || 'Objednávková služba je nedostupná.');
     return reply;
@@ -159,15 +172,19 @@ syncCheckout();
 cartPanel.hidden = false;
 renderCart();
 if (scriptUrl) {
-  canSubmit = catalogReady;
+  canSubmit = true;
   document.querySelector('#shop-preview').hidden = catalogReady;
   submitStatus.hidden = catalogReady;
-  submitStatus.textContent = 'Objednávková služba se připravuje.';
+  submitStatus.textContent = 'Zkušební režim. Odesláním ověříte vyplnění a celkovou cenu.';
   const shipping = form.querySelector('[value="shipping"]');
   shipping.disabled = checkoutShippingPrice === null;
-  document.querySelector('#shop-delivery-hint').textContent = checkoutShippingPrice === null
+  const shippingHint = checkoutShippingPrice === null
     ? 'Aktuálně je k dispozici osobní odběr.'
     : `Doprava stojí ${money.format(checkoutShippingPrice)}.`;
+  const freeShippingHint = checkoutShippingPrice !== null && checkoutFreeShippingAbove !== null
+    ? ` Při hodnotě výrobků nad ${money.format(checkoutFreeShippingAbove)} je doprava zdarma.`
+    : '';
+  document.querySelector('#shop-delivery-hint').textContent = shippingHint + freeShippingHint;
   document.querySelector('.shop-total').firstChild.textContent = 'Celkem ';
   form.querySelector('[value="transfer"]').parentElement.lastChild.textContent = ' Převodem (QR platba ve faktuře)';
   syncCheckout();

@@ -14,3 +14,6 @@ export const catalogReady = products.length > 0 && catalog?.catalogReady === tru
 export const maxQuantity = catalog?.maxQuantity ?? 20;
 export const checkoutScriptUrl = catalog?.checkoutScriptUrl || '';
 export const checkoutShippingPrice = catalog?.checkoutShippingPrice ?? null;
+export const checkoutFreeShippingAbove = Number.isSafeInteger(catalog?.checkoutFreeShippingAbove)
+  ? catalog.checkoutFreeShippingAbove
+  : null;

@@ -2,7 +2,8 @@
   "catalogReady": false,
   "maxQuantity": 20,
   "checkoutScriptUrl": "https://script.google.com/macros/s/AKfycbysiXn18VjOSNBEKOFjfy6J-I7PtWSu4HOORcCZrpOvL6KA6ftdtjxeNXdEUy0zbkm4Cg/exec",
-  "checkoutShippingPrice": null,
+  "checkoutShippingPrice": 100,
+  "checkoutFreeShippingAbove": 1000,
   "products": [
     {
       "id": "prkenko",

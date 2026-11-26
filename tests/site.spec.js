@@ -358,7 +358,16 @@ test('přílohy: formáty, přírůstky, limit, odmítnutí, odebrání a opakov
   await expect(page.locator('#attachments-error b')).toHaveCount(0);
 });
 
+async function useLocalShopApi(page) {
+  await page.route('**/katalog.json', async route => {
+    const response = await route.fetch();
+    const catalog = await response.json();
+    await route.fulfill({ json: { ...catalog, checkoutScriptUrl: '' } });
+  });
+}
+
 test('obchod přepočítává košík a uloží zkušební objednávku na serveru', async ({ page }) => {
+  await useLocalShopApi(page);
   await page.goto('/obchod.html');
   const links = await page.getByRole('navigation', { name: 'Hlavní navigace' }).getByRole('link').allTextContents();
   expect(links.slice(2).map(label => label.trim())).toEqual(['Galerie', 'Obchod', 'Kontakt ↗']);
@@ -402,6 +411,7 @@ test('obchod přepočítává košík a uloží zkušební objednávku na server
 });
 
 test('košík bez objednávkového serveru dovolí vyplnit údaje a zvolit platbu', async ({ page }) => {
+  await useLocalShopApi(page);
   await page.route('**/api/shop/status', route => route.fulfill({ status: 404 }));
   const sent = [];
   page.on('request', request => {
@@ -431,6 +441,37 @@ test('košík bez objednávkového serveru dovolí vyplnit údaje a zvolit platb
   await postcode.press('Enter');
   await expect(checkout).toBeVisible();
   expect(sent).toEqual([]);
+});
+
+test('zkušební košík ověří doručení a cenu bez odeslání údajů', async ({ page }) => {
+  await page.route('**/katalog.json', route => route.fulfill({ json: {
+    catalogReady: false, checkoutScriptUrl: 'https://script.google.com/macros/s/checkout-test/exec',
+    checkoutShippingPrice: 100, checkoutFreeShippingAbove: 1000,
+    products: [{ id: 'test', name: 'Zkušební výrobek', description: '', price: 1000 },
+      { id: 'plus', name: 'Doplněk', description: '', price: 1 }],
+  } }));
+  const posts = [];
+  page.on('request', request => { if (request.method() === 'POST') posts.push(request.url()); });
+  await page.goto('/obchod.html');
+  await page.getByRole('button', { name: 'Přidat do košíku: Zkušební výrobek' }).click();
+  await page.getByRole('link', { name: 'Přejít do košíku' }).click();
+  const form = page.locator('#shop-checkout');
+  for (const [key, value] of Object.entries({ name: 'Jana Ukázková', email: 'jana@example.com', street: 'Ukázková 12', city: 'Plzeň', postcode: '30100' })) {
+    await form.locator(`#shop-${key}`).fill(value);
+  }
+  const shipping = form.getByRole('radio', { name: 'Doručení na uvedenou adresu' });
+  await shipping.check();
+  await expect(page.locator('#cart-total')).toHaveText(/1\s100\sKč/);
+  await form.getByRole('button', { name: 'Odeslat objednávku' }).click();
+  await expect(page.locator('#shop-result')).toHaveText(/Zkušební objednávka za 1\s100\sKč/);
+  await expect(form.locator('#shop-name')).toHaveValue('Jana Ukázková');
+
+  await page.getByRole('link', { name: 'Zpět do obchodu' }).click();
+  await page.getByRole('button', { name: 'Přidat do košíku: Doplněk' }).click();
+  await page.getByRole('link', { name: 'Přejít do košíku' }).click();
+  await shipping.check();
+  await expect(page.locator('#cart-total')).toHaveText(/1\s001\sKč/);
+  expect(posts).toEqual([]);
 });
 
 for (const width of [360, 768, 1440]) {
