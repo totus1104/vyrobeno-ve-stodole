@@ -401,6 +401,36 @@ test('obchod přepočítává košík a uloží zkušební objednávku na server
   await expect(page.getByRole('link', { name: 'Košík', exact: true })).toBeVisible();
 });
 
+test('košík bez objednávkového serveru dovolí vyplnit údaje a zvolit platbu', async ({ page }) => {
+  await page.route('**/api/shop/status', route => route.fulfill({ status: 404 }));
+  const sent = [];
+  page.on('request', request => {
+    if (request.method() === 'POST') sent.push(request.url());
+  });
+  await page.goto('/obchod.html');
+  await page.getByRole('button', { name: 'Přidat do košíku: Dřevěný svícen' }).click();
+  await page.getByRole('link', { name: 'Přejít do košíku' }).click();
+  const checkout = page.locator('#shop-checkout');
+  await expect(checkout.locator('#shop-submit-status')).toContainText('objednávku teď nelze odeslat');
+  await checkout.getByLabel('Jméno a příjmení').fill('Jana Ukázková');
+  await checkout.getByLabel('E-mail').fill('jana@example.com');
+  await checkout.getByLabel('Ulice a číslo domu').fill('Ukázková 12');
+  await checkout.getByLabel('Obec', { exact: true }).fill('Plzeň');
+  const postcode = checkout.getByLabel('PSČ');
+  await postcode.fill('301 00');
+  const transfer = checkout.getByRole('radio', { name: 'Převodem po potvrzení (QR platba)' });
+  const pickupPayment = checkout.getByRole('radio', { name: 'Při osobním předání' });
+  await transfer.check();
+  await pickupPayment.check();
+  await checkout.getByRole('radio', { name: 'Doručení na uvedenou adresu' }).check();
+  await expect(transfer).toBeChecked();
+  await expect(pickupPayment).toBeDisabled();
+  await expect(checkout.getByRole('button', { name: 'Odeslat objednávku' })).toBeDisabled();
+  await postcode.press('Enter');
+  await expect(checkout).toBeVisible();
+  expect(sent).toEqual([]);
+});
+
 for (const width of [360, 768, 1440]) {
   test(`rozložení všech stránek při ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });

@@ -17,7 +17,9 @@ const result = document.querySelector('#shop-result');
 const returnLink = document.querySelector('#return-to-shop');
 const fields = form.querySelector('fieldset');
 const submitButton = form.querySelector('button[type=submit]');
+const submitStatus = document.querySelector('#shop-submit-status');
 let processing = false;
+let canSubmit = false;
 let live = false;
 let lastSubmission;
 
@@ -26,7 +28,7 @@ function syncCheckout() {
   const pickup = form.querySelector('[name=payment][value=pickup]');
   pickup.disabled = shipping;
   if (shipping && pickup.checked) form.elements.payment.value = 'transfer';
-  submitButton.disabled = processing || fields.disabled || !form.matches(':valid');
+  submitButton.disabled = processing || !canSubmit || !form.matches(':valid');
 }
 
 function element(tag, text, className) {
@@ -97,7 +99,7 @@ window.addEventListener('pageshow', event => {
 
 form.addEventListener('submit', async event => {
   event.preventDefault();
-  if (processing || !cart.size) return;
+  if (processing || !canSubmit || !cart.size || !form.reportValidity()) return;
   const data = Object.fromEntries(new FormData(form));
   const order = { ...data, items: [...cart].map(([product, quantity]) => ({ id: product.id, quantity })) };
   const details = JSON.stringify(order);
@@ -136,15 +138,21 @@ form.addEventListener('submit', async event => {
   result.focus();
 });
 
+// Editing the checkout does not require the order service.
+fields.disabled = false;
+syncCheckout();
 cartPanel.hidden = false;
 renderCart();
 try {
-  const response = await fetch('./api/shop/status');
+  const response = await fetch('./api/shop/status', { signal: AbortSignal.timeout(5000) });
   if (!response.ok) throw new Error();
-  ({ live } = await response.json());
+  const shopStatus = await response.json();
+  if (typeof shopStatus?.live !== 'boolean') throw new Error();
+  live = shopStatus.live;
+  canSubmit = true;
   document.querySelector('#shop-preview').hidden = live;
-  fields.disabled = false;
+  submitStatus.hidden = true;
   syncCheckout();
 } catch {
-  document.querySelector('#shop-intro').textContent = 'Objednávky jsou dočasně nedostupné.';
+  submitStatus.textContent = 'Objednávková služba není dostupná. Údaje můžete vyplnit na zkoušku, objednávku teď nelze odeslat.';
 }

@@ -26,7 +26,7 @@
           <p id="cart-empty">Košík je zatím prázdný.</p>
           <ul id="cart-items" class="shop-items"></ul>
           <p id="cart-status" class="visually-hidden" role="status"></p>
-          <form id="shop-checkout" hidden>
+          <form id="shop-checkout" method="post" hidden>
             <fieldset disabled>
               <legend>Údaje k objednávce</legend>
               <div class="field">
@@ -65,6 +65,7 @@
               </fieldset>
               <p class="shop-total">Celkem za výrobky <strong id="cart-total"></strong></p>
               <button class="button" type="submit" disabled>Odeslat objednávku</button>
+              <p id="shop-submit-status" role="status">Ověřuji dostupnost odeslání…</p>
             </fieldset>
           </form>
           <p id="shop-result" role="status" tabindex="-1" hidden></p>
