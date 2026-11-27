@@ -645,7 +645,7 @@ test('připnutá hlavička, odsazení obsahu a kontakty v černé patičce', asy
     await expect(footer.locator('nav')).toHaveCount(0);
     await expect(footer.locator('address')).toContainText('E-mail');
     await expect(footer.locator('address')).toContainText('Telefon');
-    await expect(footer.locator('address dd')).toHaveText(['Karel (Qasar) Kvasnička', 'karel.kvasnicka42@gmail.com', '+420 731 546 321', '@vyrobeno_ve_stodole', 'Plzeňský kraj']);
+    await expect(footer.locator('address dd')).toHaveText(['Karel (Qasar) Kvasnička', 'karel.kvasnicka42@gmail.com', '+420 731 546 321', '@vyrobeno_ve_stodole', 'Plzeňský a Středočeský kraj']);
     await expect(footer).not.toContainText('Pracovní návrh');
     await footer.getByRole('link', { name: 'Zpět nahoru' }).click();
     const headerBox = await header.boundingBox();

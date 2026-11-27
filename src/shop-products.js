@@ -65,6 +65,7 @@ function productCard(product) {
   const images = productPhotos[product.id];
 
   if (images) {
+    article.style.setProperty('--original-photo-brightness', images.originalBrightness ?? 1);
     const picture = document.createElement('div');
     picture.className = 'shop-product-photo';
     const studio = photo(images.studio, '', false);
@@ -85,6 +86,7 @@ function productCard(product) {
 }
 
 function showProductGallery(product, images) {
+  detail.closest('.product-detail').style.setProperty('--original-photo-brightness', images.originalBrightness ?? 1);
   const gallery = document.querySelector('#product-gallery');
   const viewer = document.querySelector('.product-viewer');
   const stage = viewer.querySelector('.product-viewer-stage');

@@ -47,6 +47,9 @@
   object-fit: cover;
 }
 .shop-product-original { opacity: 0; transition: opacity .2s ease; }
+.shop-product-original, .product-gallery-original {
+  filter: sepia(.25) saturate(1.55) hue-rotate(-13deg) brightness(var(--original-photo-brightness, 1)) contrast(.94);
+}
 .shop-product:focus-within .shop-product-original { opacity: 1; }
 @media (hover: hover) {
   .shop-product:hover .shop-product-original { opacity: 1; }
@@ -93,7 +96,6 @@
   aspect-ratio: 4 / 3;
   object-fit: contain;
 }
-.product-gallery-original { filter: brightness(1.07) contrast(1.045); }
 .product-info h1 { font-size: clamp(2.25rem, 4.5vw, 4.5rem); }
 .product-info p { margin-block: 12px; text-align: start; }
 .product-info > strong { display: block; margin-block: 8px 19px; font-size: 1.35rem; }

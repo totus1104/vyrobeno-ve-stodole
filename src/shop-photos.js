@@ -1,6 +1,7 @@
 // The product card shows the first original on hover.
 export const productPhotos = {
   'prkenko-1': {
+    originalBrightness: 1.035,
     studio: new URL('./assets/images/produkty/prkenko-1/studio.webp', import.meta.url).href,
     originals: [
       { src: new URL('./assets/images/produkty/prkenko-1/img-2869.webp', import.meta.url).href, alt: 'Pohled na pruhy dřeva a otvor' },
@@ -8,6 +9,7 @@ export const productPhotos = {
     ],
   },
   'prkenko-2': {
+    originalBrightness: 1.015,
     studio: new URL('./assets/images/produkty/prkenko-2/studio.webp', import.meta.url).href,
     originals: [
       { src: new URL('./assets/images/produkty/prkenko-2/img-2871.webp', import.meta.url).href, alt: 'Pohled na prkénko se světlými konci' },
@@ -15,6 +17,7 @@ export const productPhotos = {
     ],
   },
   'prkenko-3': {
+    originalBrightness: 1.045,
     studio: new URL('./assets/images/produkty/prkenko-3/studio.webp', import.meta.url).href,
     originals: [
       { src: new URL('./assets/images/produkty/prkenko-3/img-2884.webp', import.meta.url).href, alt: 'Čelní pohled na pruhované prkénko' },
@@ -23,6 +26,7 @@ export const productPhotos = {
     ],
   },
   'stojan-na-vino-1': {
+    originalBrightness: 1.045,
     studio: new URL('./assets/images/produkty/stojan-na-vino-1/studio.webp', import.meta.url).href,
     originals: [
       { src: new URL('./assets/images/produkty/stojan-na-vino-1/img-2873.webp', import.meta.url).href, alt: 'Vyvážený stojan s lahví' },
@@ -32,6 +36,7 @@ export const productPhotos = {
     ],
   },
   'stojan-na-vino-2': {
+    originalBrightness: 1.05,
     studio: new URL('./assets/images/produkty/stojan-na-vino-2/studio.webp', import.meta.url).href,
     originals: [
       { src: new URL('./assets/images/produkty/stojan-na-vino-2/img-2879.webp', import.meta.url).href, alt: 'Šikmý pohled na stojan s lahví' },
@@ -42,6 +47,7 @@ export const productPhotos = {
     ],
   },
   'padlo-kapitana-q': {
+    originalBrightness: 1.065,
     studio: new URL('./assets/images/produkty/padlo-kapitana-q/studio.webp', import.meta.url).href,
     originals: [
       { src: new URL('./assets/images/produkty/padlo-kapitana-q/img-2868.webp', import.meta.url).href, alt: 'Pádlo se šesti skleničkami zešikma' },
