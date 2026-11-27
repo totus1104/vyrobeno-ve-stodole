@@ -7,7 +7,7 @@ const SHOP = {
   legalName: '',
   address: '',
   ico: '',
-  iban: '',
+  iban: 'CZ4506000000000154876195',
   // Set to 'non-vat' only if confirmed. A VAT invoice needs tax settings and dates.
   taxMode: '',
   dueInDays: 14,

@@ -197,7 +197,10 @@ test('galerie zachovává rozložení fotografií a otevírá jejich detail', as
   await expect(page.locator('.gallery p, .gallery hr')).toHaveCount(0);
   await expect(page.locator('.gallery-dialog')).not.toBeVisible();
   await expect(page.locator('main > hr')).toHaveCount(1);
-  await expect(page.locator('.cta h2')).toHaveText('Líbí se Vám moje práce? Nechte si vyrobit vlastní produkt!');
+  const galleryCta = page.locator('.cta');
+  await expect(galleryCta.locator('h2')).toHaveText('Líbí se Vám moje práce?');
+  await expect(galleryCta.getByRole('link', { name: 'Formulář' })).toHaveAttribute('href', './kontakt.html#form-title');
+  await expect(galleryCta.getByRole('link', { name: 'Obchod' })).toHaveAttribute('href', './obchod.html');
   const photographs = page.locator('.gallery-item:has(img)');
   for (const photograph of await photographs.all()) {
     await photograph.scrollIntoViewIfNeeded();
@@ -552,35 +555,33 @@ for (const sample of [true, false]) {
 for (const width of [360, 768, 1440]) {
   test(`rozložení všech stránek při ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 1000 });
-    if (width < 768) await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.emulateMedia({ reducedMotion: 'reduce' });
     for (const route of routes) {
       await page.goto(route);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
       if (route === '/') {
-        const hero = await page.locator('.hero').boundingBox();
-        const header = await page.locator('.site-header').boundingBox();
-        if (width >= 768) {
-          expect(Math.abs(hero.height + header.height - 1000)).toBeLessThanOrEqual(2);
-          await expect(page.locator('#hero-slide-1 img')).toHaveCSS('object-fit', 'cover');
-        } else {
-          const photos = page.locator('.hero-slides');
-          const photoBox = await photos.boundingBox();
-          const headingBox = await page.locator('.hero-heading').boundingBox();
-          const introTop = (await page.locator('.home-intro').boundingBox()).y;
-          expect(photoBox.width).toBe(width);
-          expect(headingBox.y).toBeGreaterThanOrEqual(photoBox.y);
-          expect(headingBox.y + headingBox.height).toBeLessThanOrEqual(photoBox.y + photoBox.height);
-          for (const image of await photos.locator('img').all()) {
-            await expect(image).toHaveCSS('object-fit', 'contain');
-            await expect(image).toHaveCSS('mask-image', 'none');
-          }
-          for (const dot of await page.locator('.hero-dot').all()) {
-            await dot.click();
-            expect(await photos.locator('.is-active').boundingBox()).toEqual(photoBox);
-            expect((await page.locator('.home-intro').boundingBox()).y).toBe(introTop);
-          }
-          await page.locator('.hero-dot').first().click();
+        const container = await page.locator('.header-inner').boundingBox();
+        const photos = page.locator('.hero-slides');
+        const photoBox = await photos.boundingBox();
+        const headingBox = await page.locator('.hero-heading').boundingBox();
+        const intro = await page.locator('.home-intro').boundingBox();
+        for (const box of [photoBox, intro, await page.locator('.home-process').boundingBox()]) {
+          expect(box.x).toBe(container.x);
+          expect(box.width).toBe(container.width);
         }
+        await expect(photos).toHaveCSS('background-color', await page.locator('body').evaluate(body => getComputedStyle(body).backgroundColor));
+        expect(headingBox.y).toBeGreaterThanOrEqual(photoBox.y);
+        expect(headingBox.y + headingBox.height).toBeLessThanOrEqual(photoBox.y + photoBox.height);
+        for (const image of await photos.locator('img').all()) {
+          await expect(image).toHaveCSS('object-fit', 'contain');
+          await expect(image).toHaveCSS('mask-image', 'none');
+        }
+        for (const dot of await page.locator('.hero-dot').all()) {
+          await dot.click();
+          expect(await photos.locator('.is-active').boundingBox()).toEqual(photoBox);
+          expect((await page.locator('.home-intro').boundingBox()).y).toBe(intro.y);
+        }
+        await page.locator('.hero-dot').first().click();
         await expect(page.locator('#process-title')).toHaveText('Jak to všechno vzniká?');
         if (width >= 768) {
           const lines = await page.locator('#process-title').evaluate(element => {

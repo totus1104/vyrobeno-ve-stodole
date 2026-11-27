@@ -15,7 +15,7 @@
     <!--site-header-->
     <main id="obsah" tabindex="-1">
       <section
-        class="hero"
+        class="container hero"
         aria-labelledby="home-title"
         aria-roledescription="prezentace fotografií"
       >
@@ -34,7 +34,7 @@
                 ./src/assets/images/dubova-postel-s-osvetlenim-960.jpg  960w,
                 ./src/assets/images/dubova-postel-s-osvetlenim.jpg     1672w
               "
-              sizes="100vw"
+              sizes="(max-width: 767px) calc(100vw - 40px), (max-width: 1100px) calc(100vw - 64px), (max-width: 1296px) calc(100vw - 96px), 1200px"
               width="1672"
               height="941"
               alt="Dubová postel s osvětleným čelem"
@@ -51,10 +51,10 @@
             aria-hidden="true"
           >
             <img
-              src="./src/assets/images/javorova-postel.jpg"
-              alt="Javorová postel s dřevěným roštem a čelem ze čtyř prken."
-              width="1448"
-              height="1086"
+              src="./src/assets/images/knihovna-s-pracovnim-stolem.jpg"
+              width="1649"
+              height="954"
+              alt="Dřevěná knihovna s pracovním stolem a drobnou květinou na desce."
               decoding="async"
             />
           </div>
@@ -67,10 +67,10 @@
             aria-hidden="true"
           >
             <img
-              src="./src/assets/images/knihovna-s-pracovnim-stolem.jpg"
-              width="1649"
-              height="954"
-              alt="Dřevěná knihovna s pracovním stolem a drobnou květinou na desce."
+              src="./src/assets/images/naradi-a-sverky-uvod.jpg"
+              width="1672"
+              height="941"
+              alt="Truhlářská dílna s pracovním ponkem, ručním nářadím a svěrkami."
               decoding="async"
             />
           </div>
@@ -83,10 +83,10 @@
             aria-hidden="true"
           >
             <img
-              src="./src/assets/images/naradi-a-sverky.png"
-              width="1464"
-              height="1074"
-              alt="Truhlářská dílna s pracovním ponkem, ručním nářadím a svěrkami."
+              src="./src/assets/images/stolek-pro-millennium-falkon-uvod.jpg"
+              width="1672"
+              height="941"
+              alt="Tmavý dřevěný stolek se skleněnou deskou a modelem Millennium Falcon uvnitř."
               decoding="async"
             />
           </div>
@@ -141,7 +141,7 @@
           </div>
         </div>
       </section>
-      <section class="home-intro" aria-labelledby="intro-title">
+      <section class="container home-intro" aria-labelledby="intro-title">
         <div class="home-intro-heading">
           <h2 id="intro-title">Vyrobeno ve stodole</h2>
           <p class="home-subtitle">Každý kus je originál</p>
@@ -172,7 +172,7 @@
           </p>
         </div>
       </section>
-      <section class="home-process" aria-labelledby="process-title">
+      <section class="container home-process" aria-labelledby="process-title">
         <div class="process-heading">
           <h2 id="process-title">Jak to všechno vzniká?</h2>
           <p>Od prvního nápadu po předání hotového výrobku.</p>

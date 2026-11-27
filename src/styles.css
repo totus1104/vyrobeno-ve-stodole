@@ -50,40 +50,28 @@ p:not(.eyebrow):not(.home-subtitle), dd, figcaption, .contact-help li, .form-res
 .skip-link { position: fixed; top: .5rem; left: 1rem; z-index: 20; padding: .75rem 1rem; background: var(--ink); color: var(--background); transform: translateY(-200%); }
 .skip-link:focus { transform: none; }
 .eyebrow { font-size: .69rem; line-height: 1.6; font-weight: 600; letter-spacing: .02em; color: var(--muted); margin-bottom: 1.6rem; }
-.hero { display: grid; width: 100%; min-width: 0; min-height: calc(100svh - var(--header-height)); isolation: isolate; }
+.hero { display: grid; isolation: isolate; }
 .hero > * { grid-area: 1 / 1; min-width: 0; }
-.hero-slides { position: relative; overflow: hidden; }
+.hero-slides {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  background: var(--background);
+}
+@media (min-width: 768px) {
+  .hero-slides { max-height: max(18rem, calc(100svh - var(--header-height))); }
+}
 .hero-slide { position: absolute; inset: 0; opacity: 0; visibility: hidden; transition: opacity .6s ease, visibility 0s .6s; }
 .hero-slide.is-active { opacity: 1; visibility: visible; transition: opacity .6s ease, visibility 0s; }
-.hero-slide > img { display: block; width: 100%; height: 100%; object-fit: cover; }
-#hero-slide-1 > img { object-position: 70% center; }
-#hero-slide-4 { overflow: hidden; background: var(--placeholder); container: workshop-slide / size; }
-#hero-slide-4::before {
-  content: '';
-  position: absolute;
-  inset: -32px;
-  background: url('./assets/images/naradi-a-sverky.png') center / cover no-repeat;
-  filter: blur(24px);
-}
-#hero-slide-4 > img {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  transform: translate(-50%, -50%);
-  width: min(100%, calc(100cqh * 1464 / 1074));
-  height: auto;
-  mask-image: linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
-}
-@container workshop-slide (min-aspect-ratio: 1464 / 1074) {
-  #hero-slide-4 > img { mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent); }
-}
-.hero-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 20px; }
+.hero-slide > img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.hero-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 20px; margin-top: 10px; }
 .hero-dots { display: flex; }
 .hero-dot { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: transparent; }
 .hero-dot::before { content: ''; width: 9px; height: 9px; border: 1px solid var(--ink); border-radius: 50%; transition: background .2s; }
 .hero-dot[aria-pressed=true]::before, .hero-dot:hover::before { background: var(--ink); }
-.hero-heading { z-index: 1; align-self: end; justify-self: start; max-width: min(900px, 88%); margin: clamp(20px, 5vw, 96px); padding: clamp(24px, 3vw, 48px); background: rgb(255 255 255 / 60%); }
-.hero h1 { font-size: clamp(2.2rem, 4.5vw, 4.6rem); line-height: 1.12; }
-.home-intro, .home-process { width: 100%; padding-inline: clamp(20px, 5vw, 96px); }
+.hero-heading { z-index: 1; align-self: end; justify-self: start; max-width: min(900px, 88%); margin: clamp(20px, 5vw, 96px); padding: clamp(16px, 2vw, 32px); background: rgb(255 255 255 / 60%); }
+.hero h1 { font-size: clamp(1.65rem, 2.9vw, 3rem); line-height: 1.12; }
 .home-intro { display: grid; grid-template-columns: 1fr 1.25fr; gap: clamp(32px, 7vw, 128px); padding-block: 80px 96px; }
 .home-intro > * { min-width: 0; }
 .home-intro h2 { font-size: clamp(2rem, 3.2vw, 3rem); }
@@ -115,7 +103,8 @@ p:not(.eyebrow):not(.home-subtitle), dd, figcaption, .contact-help li, .form-res
 .material-band { border-block: 1px solid var(--line); }
 .material-band .container { display: flex; justify-content: space-around; padding-block: 1.2rem; font-size: .68rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); }
 .section { padding-block: 96px; }
-.section-divider { width: 100%; margin: 0; border: 0; border-top: 1px solid var(--line); }
+.section-divider { margin-block: 0; border: 0; border-top: 1px solid var(--line); }
+.section-divider:not(.container) { width: 100%; margin-inline: 0; }
 .section-divider + :is(.about-row, .about-working, .contact-layout) { padding-top: 48px; }
 .story-intro, .story-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10%; }
 .prose p { color: var(--muted); }
@@ -141,6 +130,23 @@ p:not(.eyebrow):not(.home-subtitle), dd, figcaption, .contact-help li, .form-res
 .round-arrow { border: 1px solid var(--line); border-radius: 50%; width: 48px; height: 48px; flex-shrink: 0; display: grid; place-items: center; }
 .cta { padding-block: 72px 90px; text-align: center; }
 .cta .button { margin-top: 2.2rem; }
+.gallery-cta-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1.5rem;
+  max-width: 48rem;
+  margin: 2rem auto 0;
+}
+.gallery-cta-options > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem;
+  border: 1px solid var(--line);
+}
+.gallery-cta-options .button { margin-top: 0; }
 .site-footer { --line: #443a30; background: #000; color: #e7ddcf; }
 .site-footer :focus-visible { outline-color: currentColor; }
 .footer-main { padding-block: 52px; display: grid; grid-template-columns: 1fr 1.4fr; gap: 3rem; align-items: start; }
@@ -348,38 +354,8 @@ input[type=file]::file-selector-button { cursor: pointer; background: var(--plac
   .site-header nav a:last-child { margin: 0; }
   .site-header nav a::after { display: none; }
   .site-header nav a[aria-current] { font-weight: 700; }
-  .hero { min-height: 0; }
-  .hero-slides {
-    grid-area: 1 / 1;
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    background: var(--placeholder);
-  }
-  #hero-slide-1 { --photo-backdrop: url('./assets/images/dubova-postel-s-osvetlenim-960.jpg'); }
-  #hero-slide-2 { --photo-backdrop: url('./assets/images/javorova-postel.jpg'); }
-  #hero-slide-3 { --photo-backdrop: url('./assets/images/knihovna-s-pracovnim-stolem.jpg'); }
-  #hero-slide-4 { --photo-backdrop: url('./assets/images/naradi-a-sverky.png'); }
-  .hero-slide:has(> img)::before {
-    content: '';
-    position: absolute;
-    inset: -24px;
-    background: var(--photo-backdrop, none) center / cover no-repeat;
-    filter: blur(16px) brightness(.85);
-  }
-  .hero-slide > img,
-  #hero-slide-1 > img,
-  #hero-slide-4 > img {
-    position: relative;
-    inset: auto;
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    object-position: center;
-    transform: none;
-    mask-image: none;
-  }
   .hero-heading { max-width: calc(100% - 24px); margin: 12px; padding: 10px 14px 2px; }
-  .hero h1 { font-size: clamp(1.125rem, 5vw, 1.75rem); }
+  .hero h1 { font-size: clamp(1rem, 4vw, 1.375rem); }
   .hero-controls { margin-top: 2px; }
   .home-intro { grid-template-columns: 1fr; gap: 28px; padding-block: 40px 48px; }
   .home-process { grid-template-columns: 1fr; gap: 24px; padding-block: 32px 36px; }
