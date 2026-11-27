@@ -31,7 +31,7 @@ export default defineConfig({
   }],
   build: {
     rollupOptions: {
-      input: Object.fromEntries(['index', 'o-stodole', 'galerie', 'obchod', 'kontakt', 'kosik'].map(name => [name, fileURLToPath(new URL(`./${name}.html`, import.meta.url))])),
+      input: Object.fromEntries(['index', 'o-stodole', 'galerie', 'obchod', 'produkt', 'kontakt', 'kosik'].map(name => [name, fileURLToPath(new URL(`./${name}.html`, import.meta.url))])),
     },
   },
 });

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Výrobek | Vyrobeno ve stodole</title>
+    <meta name="description" content="Detail výrobku z masivního dřeva ze Stodoly." />
+    <link rel="stylesheet" href="./src/styles.css" />
+    <link rel="stylesheet" href="./src/shop.css" />
+    <script type="module" src="./src/main.js"></script>
+    <script type="module" src="./src/shop-products.js"></script>
+  </head>
+  <body>
+    <!--site-header-->
+    <main class="container product-detail" id="obsah" tabindex="-1">
+      <a class="product-back" href="./obchod.html">Zpět do obchodu</a>
+      <article id="shop-product-detail" aria-labelledby="product-title">
+        <div class="product-info">
+          <h1 id="product-title">Výrobek</h1>
+          <p id="product-description"></p>
+          <strong id="product-price" hidden></strong>
+          <div class="product-actions" hidden>
+            <a id="go-to-cart" href="./kosik.html">Přejít do košíku</a>
+          </div>
+          <p id="shop-cart-status" role="status"></p>
+        </div>
+        <div class="product-gallery" id="product-gallery" hidden></div>
+      </article>
+      <dialog class="product-viewer" aria-labelledby="product-viewer-title">
+        <div class="product-viewer-header">
+          <h2 id="product-viewer-title">Fotografie výrobku</h2>
+          <form method="dialog">
+            <button class="product-viewer-control" type="submit" aria-label="Zavřít fotografii" autofocus>
+              <span aria-hidden="true">×</span>
+            </button>
+          </form>
+        </div>
+        <div class="product-viewer-stage"></div>
+        <div class="product-viewer-nav">
+          <button class="product-viewer-control" type="button" data-photo-step="-1" aria-label="Předchozí fotografie">
+            <span aria-hidden="true">‹</span>
+          </button>
+          <p class="product-viewer-position" role="status"></p>
+          <button class="product-viewer-control" type="button" data-photo-step="1" aria-label="Další fotografie">
+            <span aria-hidden="true">›</span>
+          </button>
+        </div>
+      </dialog>
+      <noscript><p>Pro zobrazení detailu a použití košíku zapněte JavaScript.</p></noscript>
+    </main>
+    <!--site-footer-->
+  </body>
+</html>

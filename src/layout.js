@@ -1,5 +1,6 @@
 const pages = [['index.html', 'Úvod'], ['o-stodole.html', 'O stodole'], ['galerie.html', 'Galerie'], ['obchod.html', 'Obchod'], ['kontakt.html', 'Kontakt']];
 const path = file => file === 'index.html' ? './' : `./${file}`;
+export const cartIcon = '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 4h3l2.4 11h12l2-8H6"/><circle cx="9" cy="19" r="1.2"/><circle cx="18" cy="19" r="1.2"/></svg>';
 
 export function header(current) {
   return `<a class="skip-link" href="#obsah">Přeskočit na obsah</a>
@@ -10,7 +11,7 @@ export function header(current) {
     </button>
     <nav id="hlavni-navigace" aria-label="Hlavní navigace">${pages.map(([file, label]) => `<a href="${path(file)}"${current === file ? ' aria-current="page"' : ''}>${label}${file === 'kontakt.html' ? '<span aria-hidden="true"> ↗</span>' : ''}</a>`).join('')}</nav>
     <a class="header-cart" href="./kosik.html" aria-label="Košík"${current === 'kosik.html' ? ' aria-current="page"' : ''}>
-      <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 4h3l2.4 11h12l2-8H6"/><circle cx="9" cy="19" r="1.2"/><circle cx="18" cy="19" r="1.2"/></svg>
+      ${cartIcon}
       <span class="header-cart-count" aria-hidden="true" hidden></span>
     </a>
   </div></header>`;

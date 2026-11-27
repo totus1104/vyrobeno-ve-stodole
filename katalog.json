@@ -7,22 +7,40 @@
   "checkoutFreeShippingAbove": 1000,
   "products": [
     {
-      "id": "prkenko",
-      "name": "Dubové servírovací prkénko",
-      "description": "Prkénko z masivu na servírování pečiva, sýrů nebo drobného občerstvení.",
-      "price": 690
+      "id": "prkenko-1",
+      "name": "Prkénko 1",
+      "description": "Prkénko z dubu a jasanu o rozměrech 18 × 27,5 × 2,1 cm. Ošetřené olejem určeným pro styk s potravinami. Nemyjte v myčce.",
+      "price": 490
     },
     {
-      "id": "svicen",
-      "name": "Dřevěný svícen",
-      "description": "Jednoduchý svícen z masivního dřeva na čajovou svíčku.",
+      "id": "prkenko-2",
+      "name": "Prkénko 2",
+      "description": "Prkénko z olše a javoru o rozměrech 34 × 27,5 × 2,1 cm. Ošetřené olejem určeným pro styk s potravinami. Nemyjte v myčce.",
+      "price": 550
+    },
+    {
+      "id": "prkenko-3",
+      "name": "Prkénko 3",
+      "description": "Prkénko z dubu a buku o rozměrech 20,5 × 20,5 × 2,4 cm. Ošetřené olejem určeným pro styk s potravinami. Nemyjte v myčce.",
+      "price": 590
+    },
+    {
+      "id": "stojan-na-vino-1",
+      "name": "Stojan na víno 1",
+      "description": "Samovyvažovací stojan z dubu a javoru. K vyvážení potřebuje plnou láhev vína, která není součástí dodávky. Výška 29 cm, šířka 9 cm, tloušťka 4,5 cm.",
       "price": 390
     },
     {
-      "id": "policka",
-      "name": "Nástěnná polička",
-      "description": "Malá polička z masivu na knihy a drobnosti.",
-      "price": 1250
+      "id": "stojan-na-vino-2",
+      "name": "Stojan na víno 2",
+      "description": "Stojan na víno z dubu a buku o rozměrech 26 × 8,5 × 3 cm.",
+      "price": 320
+    },
+    {
+      "id": "padlo-kapitana-q",
+      "name": "Pádlo kapitána Q.",
+      "description": "Dubová sada na šest panáků včetně šesti skleniček. Povrch je ošetřený olejem. Délka 46 cm, šířka 9 cm, výška 8 cm včetně skleniček.",
+      "price": 1000
     }
   ]
 }

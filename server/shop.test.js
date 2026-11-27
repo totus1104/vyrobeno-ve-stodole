@@ -13,14 +13,14 @@ test('objednávky, potvrzení, QR a zkušební e-maily', async () => {
   const order = {
     key: randomUUID(), name: 'Jana Ukázková', email: 'jana@example.invalid', payment: 'transfer',
     delivery: 'shipping', street: 'Ukázková 12', city: 'Plzeň', postcode: '30100',
-    items: [{ id: 'prkenko', quantity: 2, price: 1 }],
+    items: [{ id: 'prkenko-1', quantity: 2, price: 1 }],
   };
   const shop = await openShop({ env });
   assert.throws(() => shop.place({ ...order, postcode: '30' }), /adresu/);
   assert.throws(() => shop.place({ ...order, delivery: 'unknown' }), /způsob předání/);
   assert.throws(() => shop.place({ ...order, items: [{ id: 'unknown', quantity: 1 }] }), /množství/);
   const receipt = shop.place(order);
-  assert.equal(receipt.total, 1380);
+  assert.equal(receipt.total, 980);
   assert.equal(shop.get(1).address, 'Ukázková 12, 301 00 Plzeň');
   assert.deepEqual(shop.place(order), receipt);
   assert.equal(shop.list().length, 1);

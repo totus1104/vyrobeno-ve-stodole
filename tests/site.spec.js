@@ -115,7 +115,7 @@ test('všechny stránky, metadata, odkazy a bez chyb JavaScriptu', async ({ page
   for (const route of routes) {
     const response = await page.goto(route);
     expect(response.status()).toBe(200);
-    await expect(page.locator('h1')).toHaveCount(1);
+    await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1);
     await expect(page.locator('html')).toHaveAttribute('lang', 'cs');
     await expect(page.locator('meta[name=description]')).toHaveAttribute('content', /.+/);
     await expect(page.locator('header [aria-current=page]')).toHaveCount(1);
@@ -375,19 +375,19 @@ test('obchod přepočítává košík a uloží zkušební objednávku na server
   await expect(page.locator('#cart-empty')).toBeVisible();
   await expect(page.locator('#shop-checkout')).toBeHidden();
   await page.getByRole('link', { name: 'Zpět do obchodu' }).click();
-  await page.getByRole('button', { name: 'Přidat do košíku: Dubové servírovací prkénko' }).click();
+  await page.getByRole('button', { name: 'Přidat do košíku: Prkénko 1' }).click();
   await expect(page.getByRole('link', { name: 'Košík, počet kusů: 1' })).toBeVisible();
   await page.getByRole('link', { name: 'Přejít do košíku' }).click();
   await expect(page).toHaveURL(/kosik\.html$/);
   await page.reload();
-  await page.getByRole('button', { name: 'Zvýšit množství: Dubové servírovací prkénko' }).click();
-  await expect(page.locator('#cart-total')).toHaveText(/1\s380\sKč/);
-  await page.getByRole('button', { name: 'Snížit množství: Dubové servírovací prkénko' }).click();
-  await expect(page.locator('#cart-total')).toHaveText(/690\sKč/);
-  await page.getByRole('button', { name: 'Snížit množství: Dubové servírovací prkénko' }).click();
+  await page.getByRole('button', { name: 'Zvýšit množství: Prkénko 1' }).click();
+  await expect(page.locator('#cart-total')).toHaveText(/980\sKč/);
+  await page.getByRole('button', { name: 'Snížit množství: Prkénko 1' }).click();
+  await expect(page.locator('#cart-total')).toHaveText(/490\sKč/);
+  await page.getByRole('button', { name: 'Snížit množství: Prkénko 1' }).click();
   await expect(page.locator('#shop-checkout')).toBeHidden();
   await page.getByRole('link', { name: 'Zpět do obchodu' }).click();
-  await page.getByRole('button', { name: 'Přidat do košíku: Dřevěný svícen' }).click();
+  await page.getByRole('button', { name: 'Přidat do košíku: Stojan na víno 1' }).click();
   await page.getByRole('link', { name: 'Košík, počet kusů: 1' }).click();
   const checkout = page.locator('#shop-checkout');
   await checkout.getByLabel('Jméno a příjmení').fill('Jana Ukázková');
@@ -410,6 +410,43 @@ test('obchod přepočítává košík a uloží zkušební objednávku na server
   await expect(page.getByRole('link', { name: 'Košík', exact: true })).toBeVisible();
 });
 
+test('produkt z nabídky otevře detail s fotkami a cenou pro košík', async ({ page }) => {
+  await useLocalShopApi(page);
+  await page.goto('/obchod.html');
+  await expect(page.locator('.shop-product')).toHaveCount(6);
+  const link = page.getByRole('link', { name: 'Prkénko 1', exact: true });
+  const original = link.locator('.shop-product-original');
+  await expect(original).toHaveCSS('opacity', '0');
+  await link.hover();
+  await expect(original).toHaveCSS('opacity', '1');
+  await link.click();
+  await expect(page).toHaveURL(/produkt\.html\?id=prkenko-1$/);
+  await expect(page.getByRole('heading', { name: 'Prkénko 1', level: 1 })).toBeVisible();
+  const gallery = page.locator('#product-gallery img');
+  await expect(gallery).toHaveCount(3);
+  for (const image of await gallery.all()) {
+    await image.scrollIntoViewIfNeeded();
+    await expect.poll(() => image.evaluate(node => node.naturalWidth)).toBeGreaterThan(0);
+  }
+  const thumbnail = page.getByRole('button', { name: 'Zvětšit fotografii: Pohled na pruhy dřeva a otvor' });
+  await thumbnail.click();
+  const viewer = page.getByRole('dialog', { name: 'Prkénko 1' });
+  await expect(viewer.getByRole('status')).toHaveText('2 / 3');
+  await expect(viewer.getByRole('img')).toHaveAccessibleName('Pohled na pruhy dřeva a otvor');
+  await viewer.getByRole('button', { name: 'Další fotografie' }).click();
+  await expect(viewer.getByRole('status')).toHaveText('3 / 3');
+  await page.keyboard.press('ArrowRight');
+  await expect(viewer.getByRole('status')).toHaveText('1 / 3');
+  await viewer.getByRole('button', { name: 'Předchozí fotografie' }).click();
+  await expect(viewer.getByRole('status')).toHaveText('3 / 3');
+  await page.keyboard.press('Escape');
+  await expect(viewer).toBeHidden();
+  await expect(thumbnail).toBeFocused();
+  await page.getByRole('button', { name: 'Přidat do košíku: Prkénko 1' }).click();
+  await page.getByRole('link', { name: 'Přejít do košíku' }).click();
+  await expect(page.locator('#cart-total')).toHaveText(/490\sKč/);
+});
+
 test('košík bez objednávkového serveru dovolí vyplnit údaje a zvolit platbu', async ({ page }) => {
   await useLocalShopApi(page);
   await page.route('**/api/shop/status', route => route.fulfill({ status: 404 }));
@@ -418,7 +455,7 @@ test('košík bez objednávkového serveru dovolí vyplnit údaje a zvolit platb
     if (request.method() === 'POST') sent.push(request.url());
   });
   await page.goto('/obchod.html');
-  await page.getByRole('button', { name: 'Přidat do košíku: Dřevěný svícen' }).click();
+  await page.getByRole('button', { name: 'Přidat do košíku: Stojan na víno 1' }).click();
   await page.getByRole('link', { name: 'Přejít do košíku' }).click();
   const checkout = page.locator('#shop-checkout');
   await expect(checkout.locator('#shop-submit-status')).toContainText('Objednávková služba je momentálně nedostupná.');
@@ -474,32 +511,43 @@ test('zkušební košík ověří doručení a cenu bez odeslání údajů', asy
   expect(posts).toEqual([]);
 });
 
-test('testovací faktura projde přes Apps Script s cenami ze zkušebního katalogu', async ({ page }) => {
-  const endpoint = 'https://script.google.com/macros/s/checkout-test/exec';
-  await page.route('**/katalog.json', route => route.fulfill({ json: {
-    catalogReady: false, checkoutTestInvoices: true, checkoutScriptUrl: endpoint,
-    checkoutShippingPrice: 100, checkoutFreeShippingAbove: 1000,
-    products: [{ id: 'test', name: 'Zkušební výrobek', description: '', price: 1470 }],
-  } }));
-  await page.route(endpoint, route => {
-    const order = JSON.parse(new URLSearchParams(route.request().postData()).get('payload'));
-    expect(order).toMatchObject({ email: 'jana@example.com', delivery: 'shipping', payment: 'transfer', expectedTotal: 1470 });
-    const reply = JSON.stringify({ ok: true, number: 'TEST-2026000001', total: 1470, test: true, requestId: order.requestId });
-    return route.fulfill({ contentType: 'text/html; charset=utf-8',
-      body: `<script>window.top.postMessage(${reply}, ${JSON.stringify(new URL(page.url()).origin)});</script>` });
+for (const sample of [true, false]) {
+  test(`košík zobrazí potvrzení objednávky ${sample ? 'se vzorem' : 's fakturou a platebním QR kódem'}`, async ({ page }) => {
+    const endpoint = 'https://script.google.com/macros/s/checkout-test/exec';
+    await page.route('**/katalog.json', route => route.fulfill({ json: {
+      catalogReady: !sample, checkoutTestInvoices: sample, checkoutScriptUrl: endpoint,
+      checkoutShippingPrice: 100, checkoutFreeShippingAbove: 1000,
+      products: [{ id: 'test', name: 'Zkušební výrobek', description: '', price: 1470 }],
+    } }));
+    await page.route(endpoint, route => {
+      const order = JSON.parse(new URLSearchParams(route.request().postData()).get('payload'));
+      expect(order).toMatchObject({ email: 'jana@example.com', delivery: 'shipping', payment: 'transfer', expectedTotal: 1470 });
+      const number = sample ? 'TEST-2026000001' : '2026000001';
+      const reply = JSON.stringify({ ok: true, number, total: 1470, test: sample, requestId: order.requestId });
+      return route.fulfill({ contentType: 'text/html; charset=utf-8',
+        body: `<script>window.top.postMessage(${reply}, ${JSON.stringify(new URL(page.url()).origin)});</script>` });
+    });
+    await page.goto('/obchod.html');
+    await page.getByRole('button', { name: 'Přidat do košíku: Zkušební výrobek' }).click();
+    await page.getByRole('link', { name: 'Přejít do košíku' }).click();
+    await expect(page.getByRole('heading', { name: 'Položky v košíku' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Košík', exact: true })).toHaveCount(0);
+    const form = page.locator('#shop-checkout');
+    for (const [key, value] of Object.entries({ name: 'Jana Ukázková', email: 'jana@example.com', street: 'Ukázková 12', city: 'Plzeň', postcode: '30100' })) {
+      await form.locator(`#shop-${key}`).fill(value);
+    }
+    await form.getByRole('radio', { name: 'Doručení na uvedenou adresu' }).check();
+    await form.getByRole('radio', { name: /^Převodem/ }).check();
+    await form.getByRole('button', { name: 'Odeslat objednávku' }).click();
+    await expect(page.getByRole('heading', { name: 'Objednávka byla přijata' })).toBeFocused();
+    await expect(page.locator('.shop-confirmation-icon')).toBeVisible();
+    await expect(page.locator('#shop-confirmation-message')).toHaveText(sample
+      ? 'Potvrzení objednávky jsem odeslal na váš e-mail. S platbou prosím vyčkejte na pokyny.'
+      : 'Fakturu s QR kódem pro platbu jsem odeslal na váš e-mail.');
+    await expect(page.getByText('Děkuji za nákup.')).toBeVisible();
+    await expect(page.getByText('Košík je zatím prázdný.')).toBeHidden();
   });
-  await page.goto('/obchod.html');
-  await page.getByRole('button', { name: 'Přidat do košíku: Zkušební výrobek' }).click();
-  await page.getByRole('link', { name: 'Přejít do košíku' }).click();
-  const form = page.locator('#shop-checkout');
-  for (const [key, value] of Object.entries({ name: 'Jana Ukázková', email: 'jana@example.com', street: 'Ukázková 12', city: 'Plzeň', postcode: '30100' })) {
-    await form.locator(`#shop-${key}`).fill(value);
-  }
-  await form.getByRole('radio', { name: 'Doručení na uvedenou adresu' }).check();
-  await form.getByRole('radio', { name: 'Převodem po potvrzení (QR platba)' }).check();
-  await form.getByRole('button', { name: 'Odeslat objednávku' }).click();
-  await expect(page.locator('#shop-result')).toHaveText(/Objednávka TEST-2026000001.*Potvrzení jsme odeslali e-mailem/);
-});
+}
 
 for (const width of [360, 768, 1440]) {
   test(`rozložení všech stránek při ${width}px`, async ({ page }) => {
@@ -555,7 +603,7 @@ test('zvětšení textu 200 %, focus a omezený pohyb', async ({ page }) => {
     await page.goto(route);
     await page.addStyleTag({ content: 'html { font-size: 200%; }' });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-    await expect(page.locator('.hero, .page-intro, .gallery, .contact-layout')).toHaveCSS('animation-name', 'none');
+    await expect(page.locator('.hero, .page-intro, .gallery, .contact-layout, .cart-layout')).toHaveCSS('animation-name', 'none');
     await page.keyboard.press('Tab');
     await expect(page.getByRole('link', { name: 'Přeskočit na obsah' })).toBeFocused();
     expect(await page.locator('.skip-link').evaluate(el => getComputedStyle(el).outlineStyle)).not.toBe('none');

@@ -18,7 +18,7 @@ npm run build
 npm run preview
 ```
 
-Build vytvoří šest stránek ve složce `dist`. Zdrojové HTML otevírejte přes Vite, nikoli přímo přes `file://`. Sestavený web včetně objednávkového API spustíte přes `npm start`.
+Build vytvoří sedm stránek ve složce `dist`. Zdrojové HTML otevírejte přes Vite, nikoli přímo přes `file://`. Sestavený web včetně objednávkového API spustíte přes `npm start`.
 
 Při přímém zveřejnění zdrojových souborů na statickém hostingu, například GitHub Pages, doplní hlavičku a patičku prohlížeč z `src/main.js` a `src/layout.js`. Košík a formulář lze vyzkoušet i bez serveru. Odeslání objednávky se povolí až po ověření objednávkové služby spuštěné přes Node.js. Poptávky z kontaktní stránky odesílá samostatný Google Apps Script.
 
@@ -29,6 +29,7 @@ Při přímém zveřejnění zdrojových souborů na statickém hostingu, např�
 - `galerie.html` — sedm fotografií s názvy na průsvitném bílém podkladu. Výběrem fotografie se otevře detail se zvětšeným snímkem, názvem a případným popisem. Popis zapište do odstavce uvnitř `<template class="gallery-description">` u příslušné fotografie. Můžete přidat i další odstavce. Prázdný popis se v detailu nezobrazuje.
 - `kontakt.html` — kontaktní údaje, pokyny k nezávazné poptávce a formulář odesílaný přes Google Apps Script. Povinné údaje vysvětluje titulek hvězdičky při najetí myší a atribut `required`. Telefon je nepovinný, vyplněné číslo se validuje.
 - `obchod.html` — katalog s přidáváním do košíku. Položky a ceny jsou v `katalog.json`.
+- `produkt.html?id=…` — samostatný detail zvoleného výrobku. Fotky pro nabídku a detail se přiřazují podle ID v `src/shop-photos.js`.
 - `kosik.html` — samostatný košík s osobními údaji, doručovací adresou, výběrem odběru či doručení a platbou. Ikona v hlavičce ukazuje počet kusů.
 - `src/layout.js` — společná hlavička, navigace a patička, vkládané Vitem při vývoji i sestavení.
 - `src/styles.css` — paleta, typografie, rozložení, responzivita a omezení pohybu.

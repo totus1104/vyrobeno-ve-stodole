@@ -7,21 +7,16 @@
     <title>Košík | Vyrobeno ve stodole</title>
     <meta name="description" content="Nákupní košík a objednávka výrobků ze Stodoly." />
     <link rel="stylesheet" href="./src/styles.css" />
-    <link rel="stylesheet" href="./src/shop.css" />
+    <link rel="stylesheet" href="./src/shop.css?v=2" />
     <script type="module" src="./src/main.js"></script>
-    <script type="module" src="./src/shop.js"></script>
+    <script type="module" src="./src/shop.js?v=2"></script>
   </head>
   <body>
     <!--site-header-->
     <main id="obsah" tabindex="-1">
-      <section class="container page-intro">
-        <h1>Košík</h1>
-        <p class="lead" id="shop-intro">Zkontrolujte výrobky a vyplňte údaje pro objednávku.</p>
-      </section>
-      <hr class="section-divider" />
       <div class="container cart-layout">
         <section class="shop-cart" aria-labelledby="cart-title" hidden>
-          <h2 id="cart-title">Položky v košíku</h2>
+          <h1 id="cart-title">Položky v košíku</h1>
           <p id="cart-empty">Košík je zatím prázdný.</p>
           <ul id="cart-items" class="shop-items"></ul>
           <p id="cart-status" class="visually-hidden" role="status"></p>
@@ -68,6 +63,12 @@
             </fieldset>
           </form>
           <p id="shop-result" role="status" tabindex="-1" hidden></p>
+        </section>
+        <section class="shop-cart shop-confirmation" aria-labelledby="shop-confirmation-title" hidden>
+          <span class="shop-confirmation-icon" aria-hidden="true"></span>
+          <h1 id="shop-confirmation-title" tabindex="-1">Objednávka byla přijata</h1>
+          <p id="shop-confirmation-message"></p>
+          <p>Děkuji za nákup.</p>
         </section>
         <a id="return-to-shop" href="./obchod.html">Zpět do obchodu</a>
         <noscript><p>Pro použití košíku zapněte JavaScript.</p></noscript>

@@ -15,6 +15,9 @@ const status = document.querySelector('#cart-status');
 const form = document.querySelector('#shop-checkout');
 const totalLabel = document.querySelector('#cart-total');
 const result = document.querySelector('#shop-result');
+const confirmation = document.querySelector('.shop-confirmation');
+const confirmationTitle = document.querySelector('#shop-confirmation-title');
+const confirmationMessage = document.querySelector('#shop-confirmation-message');
 const returnLink = document.querySelector('#return-to-shop');
 const fields = form.querySelector('fieldset');
 const submitButton = form.querySelector('button[type=submit]');
@@ -102,6 +105,10 @@ window.addEventListener('pageshow', event => {
   if (!event.persisted) return;
   cart = readCart();
   renderCart();
+  if (cart.size) {
+    confirmation.hidden = true;
+    cartPanel.hidden = false;
+  }
   syncCheckout();
 });
 
@@ -127,18 +134,30 @@ form.addEventListener('submit', async event => {
   result.textContent = 'Odesílám objednávku…';
   try {
     const saved = await submitOrder({ ...order, key: lastSubmission.key });
-    result.textContent = scriptUrl
-      ? saved.test === true
-        ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Potvrzení jsme odeslali e-mailem. S platbou vyčkejte na pokyny.`
-        : `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Fakturu jsme odeslali e-mailem.`
-      : live
-      ? `Objednávka ${saved.number} za ${money.format(saved.total)} byla přijata. Vyčkejte na potvrzení termínu a ceny. Zatím nic neplaťte.`
-      : `Objednávka ${saved.number} za ${money.format(saved.total)} byla uložena. Potvrzení se e-mailem neodesílá.`;
     cart.clear();
     writeCart(cart);
     form.reset();
     lastSubmission = undefined;
     renderCart();
+    if (scriptUrl || live) {
+      let message = 'Termín a cenu objednávky vám potvrdím e-mailem. S platbou prosím vyčkejte.';
+      if (scriptUrl) {
+        if (saved.test === true) {
+          message = 'Potvrzení objednávky jsem odeslal na váš e-mail. S platbou prosím vyčkejte na pokyny.';
+        } else {
+          message = order.payment === 'transfer'
+            ? 'Fakturu s QR kódem pro platbu jsem odeslal na váš e-mail.'
+            : 'Fakturu jsem odeslal na váš e-mail. Objednávku uhradíte při převzetí.';
+        }
+      }
+      confirmationMessage.textContent = message;
+      result.hidden = true;
+      cartPanel.hidden = true;
+      confirmation.hidden = false;
+      confirmationTitle.focus();
+      return;
+    }
+    result.textContent = `Objednávka ${saved.number} za ${money.format(saved.total)} byla uložena. Potvrzení se e-mailem neodesílá.`;
   } catch (error) {
     result.textContent = error instanceof TypeError || error instanceof SyntaxError
       ? 'Spojení se nezdařilo. Košík zůstal zachován. Zkuste odeslání zopakovat.'
